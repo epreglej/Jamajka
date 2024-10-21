@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using TMPro;
+using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -49,7 +50,7 @@ namespace Unity.Services.Samples.ServerlessMultiplayerGame
                     6, PlayerDataManager.instance.GetName(), relayJoinCode);
                 if (this == null) return;
 
-                //SceneManager.LoadScene("Lobby");
+                NetworkManager.Singleton.SceneManager.LoadScene("Lobby", LoadSceneMode.Single);
             }
             catch (Exception e)
             {
