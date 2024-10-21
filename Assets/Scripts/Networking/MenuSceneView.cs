@@ -2,77 +2,111 @@ using System;
 using System.Threading.Tasks;
 using TMPro;
 using Unity.Netcode;
+using Unity.Services.Lobbies.Models;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
-namespace Unity.Services.Samples.ServerlessMultiplayerGame
+
+public class MenuSceneView : MonoBehaviour
 {
-    public class MenuSceneView : MonoBehaviour
+    [SerializeField] Button joinLobbyButton;
+    [SerializeField] TMP_InputField usernameInputField;
+
+    void Awake()
     {
-        [SerializeField] Button createLobbyButton;
-        [SerializeField] Button joinLobbyButton;
-        [SerializeField] TMP_InputField usernameInputField;
-        //[SerializeField] Button startGameButton;
+        joinLobbyButton.onClick.AddListener(JoinOrCreateLobby);
+    }
 
-        void Awake()
+    async Task Authenticate()
+    {
+        if (usernameInputField.text != "")
         {
-            createLobbyButton.onClick.AddListener(CreateGame);
-            joinLobbyButton.onClick.AddListener(JoinGame);
-            //startGameButton.onClick.AddListener(StartGame);
+            PlayerDataManager.instance.SetName(usernameInputField.text);
+        }
+        else
+        {
+            PlayerDataManager.instance.SetName("Player" + UnityEngine.Random.Range(0, 1000));
         }
 
-        async Task Authenticate()
+        await AuthenticationManager.SignInAnonymously(PlayerDataManager.instance.GetName());
+    }
+
+    async Task<Lobby> CreateLobby()
+    {
+        try
         {
-            if (usernameInputField.text != "")
-            {
-                PlayerDataManager.instance.SetName(usernameInputField.text);
-            }
-            else
-            {
-                PlayerDataManager.instance.SetName("Player" + UnityEngine.Random.Range(0, 1000));
-            }
+            // Usually you need to authenticate beforehand.
 
-            await AuthenticationManager.SignInAnonymously(PlayerDataManager.instance.GetName());
+            var relayJoinCode = await NetworkServiceManager.instance.InitializeHost();
+            if (this == null) return null;
+
+            var lobby = await LobbyManager.instance.CreateLobby("Lobby",
+                6, PlayerDataManager.instance.GetName(), relayJoinCode);
+            if (this == null) return null;
+
+            NetworkManager.Singleton.SceneManager.LoadScene("Lobby", LoadSceneMode.Single);
+            return lobby;
         }
-
-        async void CreateGame()
+        catch (Exception e)
         {
-            try
-            {
-                await Authenticate();
-                if (this == null) return;
-
-                var relayJoinCode = await NetworkServiceManager.instance.InitializeHost();
-                if (this == null) return;
-
-                var lobby = await LobbyManager.instance.CreateLobby("Lobby",
-                    6, PlayerDataManager.instance.GetName(), relayJoinCode);
-                if (this == null) return;
-
-                NetworkManager.Singleton.SceneManager.LoadScene("Lobby", LoadSceneMode.Single);
-            }
-            catch (Exception e)
-            {
-                Debug.LogException(e);
-            }
+            Debug.LogException(e);
+            return null;
         }
+    }
         
-        async void JoinGame()
+    async Task<Lobby> JoinLobby()
+    {
+        try
+        {
+            // Usually you need to authenticate beforehand.
+
+            var lobby = await LobbyManager.instance.QuickJoinLobby(PlayerDataManager.instance.GetName());
+            if (this == null) return null;
+
+            var relayJoinCode = lobby.Data[LobbyManager.k_RelayJoinCodeKey].Value;
+            await NetworkServiceManager.instance.InitializeClient(relayJoinCode);
+            if (this == null) return null;
+
+            return lobby;
+        }
+        catch (Exception)
+        {
+            Debug.Log("Probably failed to find active lobby.");
+            return null;
+        }
+    }
+
+    async void JoinOrCreateLobby()
+    {
+        try
+        {
+            await Authenticate();
+            if (this == null) return;
+        }
+        catch (Exception e) 
+        {
+            Debug.LogException(e);
+        }
+
+        Lobby lobby = null;
+
+        try
+        {
+            lobby = await JoinLobby();
+            if (this == null) return;
+        }
+        catch (Exception e)
+        {
+            Debug.LogException(e);
+        }
+
+        if(lobby == null)
         {
             try
             {
-                await Authenticate();
+                lobby = await CreateLobby();
                 if (this == null) return;
-
-                var lobby = await LobbyManager.instance.QuickJoinLobby(PlayerDataManager.instance.GetName());
-                if (this == null) return;
-
-                var relayJoinCode = lobby.Data[LobbyManager.k_RelayJoinCodeKey].Value;
-                await NetworkServiceManager.instance.InitializeClient(relayJoinCode);
-                if (this == null) return;
-
-                //SceneManager.LoadScene("Lobby");
             }
             catch (Exception e)
             {
@@ -80,17 +114,5 @@ namespace Unity.Services.Samples.ServerlessMultiplayerGame
             }
         }
 
-        /*
-        async void StartGame()
-        {
-            if (true)
-            {
-                SceneManager.LoadScene("Game");
-            }
-            else
-            {
-                Debug.LogError("Only the host can start the game!");
-            }
-        }*/
     }
 }
