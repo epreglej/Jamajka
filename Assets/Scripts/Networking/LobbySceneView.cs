@@ -1,6 +1,7 @@
 using System;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
+using TMPro;
 using Unity.Netcode;
 using Unity.Services.Lobbies.Models;
 using UnityEngine;
@@ -10,7 +11,9 @@ using UnityEngine.UI;
 public class LobbySceneView : MonoBehaviour
 {
     [SerializeField] Button toggleReadyStateButton;
+    [SerializeField] TMP_Text toggleReadyStateButtonText;
     bool isHost => LobbyManager.instance.isHost;
+    
 
     void Awake()
     {
@@ -37,7 +40,10 @@ public class LobbySceneView : MonoBehaviour
         try
         {
             await LobbyManager.instance.ToggleReadyState();
-            Debug.Log("Toggled ready state.");
+            if(toggleReadyStateButtonText.text == "Ready")
+            {
+                toggleReadyStateButtonText.text = "Unready";
+            }
         }
         catch (Exception e)
         {
