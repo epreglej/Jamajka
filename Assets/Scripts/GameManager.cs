@@ -20,6 +20,7 @@ public class GameManager : NetworkBehaviour
 
     private int players_called_ready = 0;
     private bool playerCalledTurnOver = false;
+    private bool playerBattleActive = false;
 
     public enum TreasureCard
     {
@@ -33,7 +34,7 @@ public class GameManager : NetworkBehaviour
 
     public enum ActionCardOption
     {
-        MoveForward, MoveBackward, LoadGold, LoadFood, LoadCannon
+        MoveForward, MoveBackward, LoadGold, LoadFood, LoadCannon, None
     }
 
     public enum GameState
@@ -48,8 +49,6 @@ public class GameManager : NetworkBehaviour
 
     public GameState state = GameState.Start;
 
-   
-    
 
     void StartGame()
     {
@@ -61,15 +60,6 @@ public class GameManager : NetworkBehaviour
 
         // distribute initial resources
         DistributeStartingResources();
-
-        // set special cards on pirate lairs (9 random card)
-
-        // decide on a captain (player order)
-
-        player_on_turn = captain_player;
-
-        StartGameCycle();
-
     }
 
     void EndGame()
@@ -82,6 +72,22 @@ public class GameManager : NetworkBehaviour
     void DistributeStartingResources()
     {
         // give everyone food and gold
+
+
+        // set special cards on pirate lairs (9 random card)
+
+        // decide on a captain (player order)
+
+        player_on_turn = captain_player;
+
+        // start some coroutine that calls:
+        BoardSetupPhaseOver();
+
+    }
+
+    void BoardSetupPhaseOver()
+    {
+        StartGameCycle();
     }
 
     async void StartGameCycle()
@@ -114,7 +120,7 @@ public class GameManager : NetworkBehaviour
     {
         while (players_called_ready < players.Count) // or required player count
         {
-            await Task.Delay(1000); // check every 100ms
+            await Task.Delay(1000);
         }
 
         players_called_ready = 0;
@@ -173,30 +179,50 @@ public class GameManager : NetworkBehaviour
         // draw to 4 if has MorgansMap
     }
 
-    void StartPlayerTurn(int player_index)
+    void PlayersChooseCard()
+    {
+
+    }
+
+    async void StartPlayerTurn(int player_index)
     {
         player_on_turn = player_index;
 
         // start timer
 
-        // call an rpc for player to choose a card 
+        // call an rpc for player to choose a card
+        PlayersChooseCard();
 
+        await WaitForPlayers();
+
+        // Player script should hold this
+        // rpc to set these on player that is on turn
         ActionCardOption card_action1 = ActionCardOption.MoveForward;
         ActionCardOption card_action2 = ActionCardOption.LoadFood;
 
-        ExecutePlayerAction(card_action1);
+        ExecutePlayerAction();
+    }
 
-        ExecutePlayerAction(card_action2);
+    [ServerRpc]
+    public void PlayerAction1EndedServerRPC()
+    {
+        ExecutePlayerAction(false);
+    }
 
+    [ServerRpc]
+    public void PlayerAction2EndedServerRPC()
+    {
         EndPlayerTurn();
     }
 
-    void ExecutePlayerAction(ActionCardOption cardOption)
+
+    public void ExecutePlayerAction(bool useDayOption = true)
     {
+        ActionCardOption cardOption = ActionCardOption.MoveForward; // this is in player script
+
         if (cardOption == ActionCardOption.MoveForward || cardOption == ActionCardOption.MoveBackward)
         {
             // move player 
-
             EndOfPlayerMovement();
         }
         else
@@ -206,9 +232,17 @@ public class GameManager : NetworkBehaviour
         }
     }
 
-    void EndOfPlayerMovement(bool mustPay = true)
+    async void EndOfPlayerMovement(bool mustPay = true)
     {
-        CheckBattleConditions();
+        if (CheckBattleConditions())
+        {
+
+            StartBattlePhase();
+            while (playerBattleActive)
+            {
+                await Task.Delay(1000);
+            }
+        }
 
         if (GetPlayerSquareType() == SquareType.PirateLair)
         {
@@ -230,10 +264,10 @@ public class GameManager : NetworkBehaviour
         // make a player choose a hold to put resource into
     }
 
-    void CheckBattleConditions()
+    bool CheckBattleConditions()
     {
         //if any players on the player square
-        StartBattlePhase();
+        return true;
     }
 
     void StartBattlePhase()
@@ -335,6 +369,8 @@ public class GameManager : NetworkBehaviour
          *  2) take one action card
          *  3) give looser a cursed own action card  
          */
+
+        playerBattleActive = false;
     }
 
     void TryTaxPlayer()
