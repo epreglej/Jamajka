@@ -3,6 +3,7 @@ using Unity.Netcode;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
+
 public class PlayerGameScript : NetworkBehaviour
 {
     public NetworkVariable<int> player_index = new NetworkVariable<int>(0);
@@ -21,8 +22,10 @@ public class PlayerGameScript : NetworkBehaviour
         public int ammount;
     }
 
-    private void Awake()
+    public override void OnNetworkSpawn()
     {
+        base.OnNetworkSpawn();
+
         for (int i = 0; i < 5; i++)
         {
             Hold h = new();
@@ -31,6 +34,8 @@ public class PlayerGameScript : NetworkBehaviour
 
             holds.Add(h);
         }
+
+        //GameManager.instance.AddPlayerServerRPC(gameObject);
     }
 
     public void AddInitialResources()

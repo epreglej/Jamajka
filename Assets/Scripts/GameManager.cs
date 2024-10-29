@@ -452,4 +452,10 @@ public class GameManager : NetworkBehaviour
 
         return result;
     }
+
+    [ServerRpc]
+    void AddPlayerServerRPC()
+    {
+
+    }
 }
