@@ -6,8 +6,11 @@ using System.Threading;
 
 public class GameManager : NetworkBehaviour
 {
+    const int STAR_COMBAT_VALUE = -1;
 
-    List<GameObject> players = new List<GameObject>();
+    public static GameManager instance { get; private set; }
+
+    List<PlayerGameScript> players = new List<PlayerGameScript>();
 
     public int captain_player = 0;
     public int player_on_turn = 0;
@@ -49,14 +52,35 @@ public class GameManager : NetworkBehaviour
 
     public GameState state = GameState.Start;
 
+    void Awake()
+    {
+        if (instance != null && instance != this)
+        {
+            Destroy(this);
+        }
+        else
+        {
+            instance = this;
+        }
+    }
 
+    private void Start()
+    {
+        if (IsServer)
+        {
+            //setup player list
+            StartGame();
+        }
+    }
     void StartGame()
     {
         // load players
         if (players.Count < 2)
         {
             // handle error
+            
         }
+        // shuffle players if needed
 
         // distribute initial resources
         DistributeStartingResources();
@@ -72,18 +96,19 @@ public class GameManager : NetworkBehaviour
     void DistributeStartingResources()
     {
         // give everyone food and gold
-
+        foreach(PlayerGameScript player in players)
+        {
+            player.AddInitialResources();
+        }
 
         // set special cards on pirate lairs (9 random card)
-
-        // decide on a captain (player order)
 
         player_on_turn = captain_player;
 
         // start some coroutine that calls:
         BoardSetupPhaseOver();
-
     }
+
 
     void BoardSetupPhaseOver()
     {
@@ -93,7 +118,14 @@ public class GameManager : NetworkBehaviour
     async void StartGameCycle()
     {
         //throw dice
+        day_dice_value.Value = -1;
+        night_dice_value.Value = -1;
         ThrowDice();
+
+        while (day_dice_value.Value < 0 && night_dice_value.Value < 0)
+        {
+            await Task.Delay(1000);
+        }
 
         //players draw cards
         state = GameState.ChooseCards;
@@ -115,6 +147,22 @@ public class GameManager : NetworkBehaviour
 
         EndGameCycle();
     }
+
+    void EndGameCycle()
+    {
+        captain_player = (captain_player + 1) % players.Count;
+
+        player_on_turn = captain_player;
+
+        if (playerReachedEndSquare)
+        {
+            EndGame();
+            return;
+        }
+
+        StartGameCycle();
+    }
+
 
     public async Task WaitForPlayers()
     {
@@ -141,27 +189,19 @@ public class GameManager : NetworkBehaviour
         }
     }
 
-
-    void EndGameCycle()
-    {
-        captain_player = (captain_player + 1) % players.Count;
-
-        player_on_turn = captain_player;
-
-        if (playerReachedEndSquare)
-        {
-            EndGame();
-            return;
-        }
-
-        StartGameCycle();
-    }
-
     void ThrowDice()
     {
         // throw 2 dice
+        int dice1 = Random.Range(1, 6);
+        int dice2 = Random.Range(1, 6);
         
         // let the captain player choose which dice is day which is night
+    }
+
+    void OnDayNightDiceOrderChosen(int day, int night)
+    {
+        day_dice_value.Value = day;
+        night_dice_value.Value = night;
     }
 
     int ThrowCombatDice()
@@ -173,27 +213,17 @@ public class GameManager : NetworkBehaviour
     void DrawCards()
     {
         // send an rpc to client and wait for confirmation they are done
-
-        //draw 3 first round, 1 others
-
-        // draw to 4 if has MorgansMap
-    }
-
-    void PlayersChooseCard()
-    {
-
+        foreach(PlayerGameScript player in players)
+        {
+            player.ChooseACardClientRpc();
+        }
     }
 
     async void StartPlayerTurn(int player_index)
     {
         player_on_turn = player_index;
 
-        // start timer
-
-        // call an rpc for player to choose a card
-        PlayersChooseCard();
-
-        await WaitForPlayers();
+        // read the player card
 
         // Player script should hold this
         // rpc to set these on player that is on turn
@@ -297,7 +327,7 @@ public class GameManager : NetworkBehaviour
             usedSaransSaber = true;
         }
 
-        if(attacker_dice == -1) // replace with star value
+        if(attacker_dice == STAR_COMBAT_VALUE) // replace with star value
         {
             ResolveBattleResult(attacker, defender);
             return;
@@ -312,7 +342,7 @@ public class GameManager : NetworkBehaviour
             defender_dice = ThrowCombatDice();
         }
 
-        if (defender_dice == -1) // replace with star value
+        if (defender_dice == STAR_COMBAT_VALUE) // replace with star value
         {
             ResolveBattleResult(defender, attacker);
             return;
@@ -391,7 +421,7 @@ public class GameManager : NetworkBehaviour
             // 10 = move back to pirate lair
             // star = stay put
 
-            if (result != -1) // TODO: replace with star dice value
+            if (result != STAR_COMBAT_VALUE) // TODO: replace with star dice value
             {
                 // move the player back
 
