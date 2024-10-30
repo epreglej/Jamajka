@@ -8,12 +8,14 @@ public class GameManager : NetworkBehaviour
 {
     const int STAR_COMBAT_VALUE = -1;
 
+    public GameObject playerPrefab;
+
     public static GameManager instance { get; private set; }
 
     List<PlayerGameScript> players = new List<PlayerGameScript>();
 
-    public int captain_player = 0;
-    public int player_on_turn = 0;
+    public NetworkVariable<int> captain_player = new NetworkVariable<int>(0);
+    public NetworkVariable<int> player_on_turn = new NetworkVariable<int>(0);
 
     public NetworkVariable<int> day_dice_value = new NetworkVariable<int>();
     public NetworkVariable<int> night_dice_value = new NetworkVariable<int>();
@@ -24,6 +26,10 @@ public class GameManager : NetworkBehaviour
     private int players_called_ready = 0;
     private bool playerCalledTurnOver = false;
     private bool playerBattleActive = false;
+
+    public Canvas DiceUI;
+    public Canvas CombatUI;
+    public Canvas ActionCardUI;
 
     public enum TreasureCard
     {
@@ -52,8 +58,14 @@ public class GameManager : NetworkBehaviour
 
     public GameState state = GameState.Start;
 
-    void Awake()
+    public override void OnNetworkSpawn()
     {
+        base.OnNetworkSpawn();
+
+        Debug.Log("Hello world");
+
+        Debug.Log(IsHost);
+
         if (instance != null && instance != this)
         {
             Destroy(this);
@@ -62,16 +74,14 @@ public class GameManager : NetworkBehaviour
         {
             instance = this;
         }
-    }
 
-    private void Start()
-    {
         if (IsServer)
         {
             //setup player list
-            StartGame();
+            //StartGame();
         }
     }
+
     void StartGame()
     {
         // load players
@@ -137,7 +147,7 @@ public class GameManager : NetworkBehaviour
         state = GameState.PlayerTurn;
         for (int i = 0; i < players.Count; i++)
         {
-            StartPlayerTurn((captain_player + i) % players.Count);
+            StartPlayerTurn((captain_player.Value + i) % players.Count);
             // wait for end player turn
             while (playerCalledTurnOver == false)
             {
@@ -150,7 +160,7 @@ public class GameManager : NetworkBehaviour
 
     void EndGameCycle()
     {
-        captain_player = (captain_player + 1) % players.Count;
+        captain_player.Value = (captain_player.Value + 1) % players.Count;
 
         player_on_turn = captain_player;
 
@@ -183,7 +193,7 @@ public class GameManager : NetworkBehaviour
     [Rpc(SendTo.Server)]
     public void PlayerEndedTurnServerRpc(int player)
     {
-        if(player == player_on_turn)
+        if(player == player_on_turn.Value)
         {
             playerCalledTurnOver = true;
         }
@@ -196,12 +206,25 @@ public class GameManager : NetworkBehaviour
         int dice2 = Random.Range(1, 6);
         
         // let the captain player choose which dice is day which is night
+        foreach(PlayerGameScript player in players)
+        {
+            player.OpenDiceUIClientRpc(dice1, dice2);
+        }
+    }
+    
+    [Rpc(SendTo.Server, RequireOwnership = false)]
+    public void ThrowDiceServerRpc()
+    {
+        Debug.Log("Throw dice rpc called");
+        ThrowDice();
     }
 
-    void OnDayNightDiceOrderChosen(int day, int night)
+    public void OnDayNightDiceOrderChosen(int day, int night)
     {
         day_dice_value.Value = day;
         night_dice_value.Value = night;
+
+        CloseDiceDialogClientRpc();
     }
 
     int ThrowCombatDice()
@@ -219,9 +242,9 @@ public class GameManager : NetworkBehaviour
         }
     }
 
-    async void StartPlayerTurn(int player_index)
+    void StartPlayerTurn(int player_index)
     {
-        player_on_turn = player_index;
+        player_on_turn.Value = player_index;
 
         // read the player card
 
@@ -313,7 +336,7 @@ public class GameManager : NetworkBehaviour
 
     void StartSingleBattle(int defender)
     {
-        int attacker = player_on_turn;
+        int attacker = player_on_turn.Value;
 
         // Attacker adds cannon token
         int attacker_tokens = 0; // replace with function call
@@ -442,7 +465,7 @@ public class GameManager : NetworkBehaviour
         // get the square in question
         for(int i = 0; i < players.Count; i++)
         {
-            if (i == player_on_turn) continue;
+            if (i == player_on_turn.Value) continue;
 
             //if (players[i].IsOnSquare())
             //{
@@ -453,9 +476,26 @@ public class GameManager : NetworkBehaviour
         return result;
     }
 
-    [ServerRpc]
-    void AddPlayerServerRPC()
+    [Rpc(SendTo.Server, RequireOwnership = false)]
+    public void AddPlayerServerRPC(ulong playerNetworkObjectId)
     {
+        NetworkObject playerNetworkObject = NetworkManager.Singleton.SpawnManager.SpawnedObjects[playerNetworkObjectId];
+        GameObject player = playerNetworkObject.gameObject;
 
+        players.Add(player.GetComponent<PlayerGameScript>());
+
+        player.GetComponent<PlayerGameScript>().player_index.Value = players.Count - 1;
+    }
+
+    [Rpc(SendTo.Everyone, RequireOwnership = false)]
+    public void SwitchDiceValuesClientRpc()
+    {
+        DiceUI.GetComponent<DiceUIScript>().SwitchValues();
+    }
+
+    [Rpc(SendTo.Everyone, RequireOwnership = false)]
+    public void CloseDiceDialogClientRpc()
+    {
+        DiceUI.GetComponent<DiceUIScript>().CloseDiceDialog();
     }
 }

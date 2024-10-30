@@ -8,14 +8,32 @@ public class PlayerGameScript : NetworkBehaviour
 {
     public NetworkVariable<int> player_index = new NetworkVariable<int>(0);
 
+    // 
     GameManager.ActionCardOption cardOption1 = GameManager.ActionCardOption.None;
     GameManager.ActionCardOption cardOption2 = GameManager.ActionCardOption.None;
 
-    List<Hold> holds = new List<Hold>();
+    public List<Hold> holds = new List<Hold>();
+    public List<ActionCard> deck = new List<ActionCard>();
 
+    // action cards in hand
+    private int replace_action_card_number = -1; // last used card (1, 2, 3 or 4)
+    public ActionCard action_card_1;
+    public ActionCard action_card_2;
+    public ActionCard action_card_3;
+    public ActionCard action_card_4; // only if morgans map
+
+
+    // hold varables
     private GameManager.TokenType replaceHold_token;
     private int replaceHold_ammount;
     private int replaceHold_index = -1;
+
+    // action cards
+    public bool hasMorgansMap = false; // draw 2 cards treasure card
+    public bool hasSaransSaber = false; // rerol combat dice
+    public bool hasLadyBeth = false; // +2 in combat
+    public bool has6thHold = false; // 6. hold spot, we ignore this for now
+
     public struct Hold
     {
         public GameManager.TokenType tokenType;
@@ -33,9 +51,26 @@ public class PlayerGameScript : NetworkBehaviour
             h.ammount = 0;
 
             holds.Add(h);
+        }    
+    }
+
+    private void Start()
+    {
+        if (IsOwner)
+        {
+            ulong playerNetworkObjectId = GetComponent<NetworkObject>().NetworkObjectId;
+            GameManager.instance.AddPlayerServerRPC(playerNetworkObjectId);
+            InitializeDeck();
         }
 
-        //GameManager.instance.AddPlayerServerRPC(gameObject);
+    }
+
+    public void InitializeDeck()
+    {
+        // add action cards to deck
+
+        ActionCardsUIScript ui = GameManager.instance.ActionCardUI.GetComponent<ActionCardsUIScript>();
+        ui.UpdateActionCards(gameObject);
     }
 
     public void AddInitialResources()
@@ -96,7 +131,7 @@ public class PlayerGameScript : NetworkBehaviour
     }
 
 
-    [ClientRpc]
+    [Rpc(SendTo.Everyone)]
     public void ChooseACardClientRpc()
     {
         if (!IsOwner) return;
@@ -109,6 +144,43 @@ public class PlayerGameScript : NetworkBehaviour
 
         GameManager.instance.PlayerIsReadyServerRpc();
     }
+
+    [ClientRpc]
+    public void OpenDiceUIClientRpc(int day, int night)
+    {
+        if (IsOwner)
+        {
+            bool isCaptain = player_index.Value == GameManager.instance.captain_player.Value;
+            GameManager.instance.DiceUI.GetComponent<DiceUIScript>().OpenDiceDialog(day, night, isCaptain);
+        }
+    }
+
+    [Rpc(SendTo.Everyone)]
+    public void UpdateActionCardsInHandClientRpc()
+    {
+        ActionCard drawnCard = deck[0];
+        deck.RemoveAt(0);
+
+        switch (replace_action_card_number)
+        {
+            case 1:
+                action_card_1 = drawnCard;
+                break;
+            case 2:
+                action_card_2 = drawnCard;
+                break;
+            case 3:
+                action_card_3 = drawnCard;
+                break;
+            case 4:
+                action_card_4 = drawnCard;
+                break;
+        }
+
+        ActionCardsUIScript ui = GameManager.instance.ActionCardUI.GetComponent<ActionCardsUIScript>();
+        ui.UpdateActionCards(gameObject);
+    }
+
 
     public void SetActionCards(GameManager.ActionCardOption o1, GameManager.ActionCardOption o2)
     {
