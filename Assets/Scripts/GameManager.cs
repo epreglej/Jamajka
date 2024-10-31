@@ -56,6 +56,21 @@ public class GameManager : NetworkBehaviour
         PirateLair, Sea, Port
     }
 
+    [System.Serializable]
+    public struct ActionCardData : INetworkSerializable
+    {
+        public string cardID;
+
+        public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
+        {
+            serializer.SerializeValue(ref cardID);
+        }
+    }
+
+    public Dictionary<string, ActionCard> actionCardLookup = new Dictionary<string, ActionCard>();
+    
+    public NetworkVariable<ActionCardData> currentPlayedCard = new NetworkVariable<ActionCardData>();
+
     public GameState state = GameState.Start;
 
     public override void OnNetworkSpawn()
@@ -74,11 +89,25 @@ public class GameManager : NetworkBehaviour
         {
             instance = this;
         }
+    }
 
-        if (IsServer)
+    private void Start()
+    {
+        ActionCard[] allCards = Resources.LoadAll<ActionCard>("ActionCards");
+        foreach (ActionCard card in allCards)
         {
-            //setup player list
-            //StartGame();
+            actionCardLookup[card.cardID] = card;
+        }
+    }
+
+    private void Update()
+    {
+        if (!IsServer) return;
+
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            Debug.Log("Space");
+            StartGame();
         }
     }
 
@@ -137,11 +166,13 @@ public class GameManager : NetworkBehaviour
             await Task.Delay(1000);
         }
 
-        //players draw cards
+        //players draw cards and choose
         state = GameState.ChooseCards;
         DrawCards();
 
         await WaitForPlayers();
+
+        Debug.Log("All players chose their cards");
 
         //when all players are ready
         state = GameState.PlayerTurn;
@@ -212,6 +243,7 @@ public class GameManager : NetworkBehaviour
         }
     }
     
+    //  used for testing
     [Rpc(SendTo.Server, RequireOwnership = false)]
     public void ThrowDiceServerRpc()
     {
@@ -246,12 +278,7 @@ public class GameManager : NetworkBehaviour
     {
         player_on_turn.Value = player_index;
 
-        // read the player card
-
-        // Player script should hold this
-        // rpc to set these on player that is on turn
-        ActionCardOption card_action1 = ActionCardOption.MoveForward;
-        ActionCardOption card_action2 = ActionCardOption.LoadFood;
+        players[player_on_turn.Value].GetComponent<PlayerGameScript>().GetPlayedActionCardIDRpc();
 
         ExecutePlayerAction();
     }
@@ -271,12 +298,20 @@ public class GameManager : NetworkBehaviour
 
     public void ExecutePlayerAction(bool useDayOption = true)
     {
-        ActionCardOption cardOption = ActionCardOption.MoveForward; // this is in player script
+        // read the player card
+        ActionCard playedCard = actionCardLookup[currentPlayedCard.Value.cardID];
+
+        // Player script should hold this
+        // rpc to set these on player that is on turn
+        ActionCardOption card_action1 = playedCard.leftOption;
+        ActionCardOption card_action2 = playedCard.rightOption;
+
+        ActionCardOption cardOption = useDayOption ? card_action1 : card_action2;
 
         if (cardOption == ActionCardOption.MoveForward || cardOption == ActionCardOption.MoveBackward)
         {
             // move player 
-            EndOfPlayerMovement();
+            EndOfPlayerMovement(true, useDayOption);
         }
         else
         {
@@ -285,7 +320,7 @@ public class GameManager : NetworkBehaviour
         }
     }
 
-    async void EndOfPlayerMovement(bool mustPay = true)
+    async void EndOfPlayerMovement(bool mustPay = true, bool dayAction = true)
     {
         if (CheckBattleConditions())
         {
@@ -297,13 +332,20 @@ public class GameManager : NetworkBehaviour
             }
         }
 
-        if (GetPlayerSquareType() == SquareType.PirateLair)
+        if (!mustPay || GetPlayerSquareType() == SquareType.PirateLair)
         {
-            // give player the special card if there
+            if(GetPlayerSquareType() == SquareType.PirateLair)
+            {
+                // give player the special card if there
+            }
+            
+            // this should be called in a function that ends some animation of player turn end
+            if (dayAction) PlayerAction1EndedServerRPC();
+            else PlayerAction2EndedServerRPC();
         }
-        else if(mustPay)
+        else
         {
-            TryTaxPlayer();
+            TryTaxPlayer(dayAction);
         }
     }
 
@@ -426,7 +468,7 @@ public class GameManager : NetworkBehaviour
         playerBattleActive = false;
     }
 
-    void TryTaxPlayer()
+    void TryTaxPlayer(bool dayAction)
     {
         if (true) //player has the needed resources
         {
@@ -448,7 +490,7 @@ public class GameManager : NetworkBehaviour
             {
                 // move the player back
 
-                EndOfPlayerMovement(false);
+                EndOfPlayerMovement(false, dayAction);
             }
         }
     }
@@ -497,5 +539,18 @@ public class GameManager : NetworkBehaviour
     public void CloseDiceDialogClientRpc()
     {
         DiceUI.GetComponent<DiceUIScript>().CloseDiceDialog();
+    }
+
+    public PlayerGameScript GetOwnerPlayerScript(ulong clientId)
+    {
+        if (NetworkManager.Singleton.ConnectedClients.TryGetValue(clientId, out var client))
+        {
+            var playerObject = client.PlayerObject;
+            if (playerObject != null)
+            {
+                return playerObject.GetComponent<PlayerGameScript>();
+            }
+        }
+        return null;
     }
 }

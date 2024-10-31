@@ -139,8 +139,21 @@ public class PlayerGameScript : NetworkBehaviour
         // draw a card
         // draw 3 first round, 1 others
         // draw to 4 if has MorgansMap
+        
+        // UpdateActionCardsInHand()
 
-        // choose a card
+        GameManager.instance.ActionCardUI.GetComponent<ActionCardsUIScript>().ChooseCardCalled();
+    }
+
+    public void ActionCardChosen(int index)
+    {
+        if (!IsOwner) return;
+
+        Debug.Log("Player chose card " + index.ToString());
+
+        replace_action_card_number = index;
+
+        GameManager.instance.ActionCardUI.GetComponent<ActionCardsUIScript>().CloseChooseACardMenu();
 
         GameManager.instance.PlayerIsReadyServerRpc();
     }
@@ -155,8 +168,7 @@ public class PlayerGameScript : NetworkBehaviour
         }
     }
 
-    [Rpc(SendTo.Everyone)]
-    public void UpdateActionCardsInHandClientRpc()
+    public void UpdateActionCardsInHand()
     {
         ActionCard drawnCard = deck[0];
         deck.RemoveAt(0);
@@ -179,6 +191,19 @@ public class PlayerGameScript : NetworkBehaviour
 
         ActionCardsUIScript ui = GameManager.instance.ActionCardUI.GetComponent<ActionCardsUIScript>();
         ui.UpdateActionCards(gameObject);
+    }
+
+    [Rpc(SendTo.Owner)]
+    public void GetPlayedActionCardIDRpc()
+    {
+        ActionCard playedCard;
+
+        if (replace_action_card_number == 1) playedCard = action_card_1;
+        else if (replace_action_card_number == 2) playedCard = action_card_2;
+        else if (replace_action_card_number == 3) playedCard = action_card_3;
+        else playedCard = action_card_4;
+  
+        GameManager.instance.currentPlayedCard.Value = new GameManager.ActionCardData { cardID = playedCard.cardID };
     }
 
 

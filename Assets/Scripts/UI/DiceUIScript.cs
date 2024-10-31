@@ -21,15 +21,6 @@ public class DiceUIScript : MonoBehaviour
         holder_panel.SetActive(false);
     }
 
-    private void Update()
-    {
-        if (Input.GetKeyDown(KeyCode.Space))
-        {
-            Debug.Log("Space");
-            GameManager.instance.ThrowDiceServerRpc();
-        }
-    }
-
     public void OpenDiceDialog(int day, int night, bool isCaptain)
     {
         Debug.Log("Opening dice window");
