@@ -28,17 +28,21 @@ public class GameManager : NetworkBehaviour
 
     public bool playerReachedEndSquare = false;
 
+    
     private int players_called_ready = 0;
     private bool playerCalledTurnOver = false;
     public bool playerBattleActive = false;
 
+    // Ovi cekaju da playeri kliknu nest u UI
     private TaskCompletionSource<bool> saransSaberResponse;
     private TaskCompletionSource<int> opponentChoiceResponse;
 
+    // UI prefabi
     public Canvas DiceUI;
     public Canvas CombatUI;
     public Canvas ActionCardUI;
 
+    // Za rollanje Combat kocke - samo random index na listu
     public static List<int> COMBAT_DICE_VALUES = new List<int>{2, 4, 6, 8, STAR_COMBAT_VALUE};
 
     public enum TreasureCard
@@ -56,11 +60,13 @@ public class GameManager : NetworkBehaviour
         MoveForward, MoveBackward, LoadGold, LoadFood, LoadCannon, None
     }
 
+    // Od ovoga sam odustal od koristenja na pocetku tak da je useless, al za svaki slucaj ne brisat
     public enum GameState
     {
         Start, ChooseCards, PlayerTurn, End
     }
 
+    // TODO: BOARD - koristiti ovo pls
     public enum SquareType
     {
         PirateLair, Sea, Port
@@ -130,8 +136,7 @@ public class GameManager : NetworkBehaviour
         // load players
         if (players.Count < 2)
         {
-            // handle error
-
+            // TODO - BOARD handle error - wrati na meni valjda
         }
         else
         {
@@ -148,6 +153,8 @@ public class GameManager : NetworkBehaviour
 
     void EndGame()
     {
+        // TODO - BOARD
+
         // calculate the points
 
         // display results
@@ -161,14 +168,14 @@ public class GameManager : NetworkBehaviour
             player.AddInitialResources();
         }
 
-        // set special cards on pirate lairs (9 random card)
+        // TODO - BOARD set special cards on pirate lairs (9 random card)
 
         player_on_turn = captain_player;
 
+        // TODO - BOARD - ako hocete neku animaciju dodat al doubt
         // start some coroutine that calls:
         BoardSetupPhaseOver();
     }
-
 
     void BoardSetupPhaseOver()
     {
@@ -225,51 +232,39 @@ public class GameManager : NetworkBehaviour
         StartGameCycle();
     }
 
-
-    public async Task WaitForPlayers()
+    async void StartPlayerTurn(int player_index)
     {
-        while (players_called_ready < players.Count) // or required player count
+        player_on_turn.Value = player_index;
+
+        currentPlayedCard.Value = new ActionCardData { cardID = "" };
+
+        players[player_on_turn.Value].GetComponent<PlayerGameScript>().GetPlayedActionCardIDRpc();
+
+        while (currentPlayedCard.Value.cardID == "")
         {
-            await Task.Delay(1000);
+            await Task.Delay(100);
         }
 
-        players_called_ready = 0;
+        ExecutePlayerAction();
     }
 
-    [Rpc(SendTo.Server)]
-    public void PlayerIsReadyServerRpc()
+    void EndPlayerTurn()
     {
-        players_called_ready++;
+        // TODO : nothing for now, maybe usefull somehow
     }
 
-    [Rpc(SendTo.Server)]
-    public void PlayerEndedTurnServerRpc(int player)
-    {
-        if(player == player_on_turn.Value)
-        {
-            playerCalledTurnOver = true;
-        }
-    }
-
+    #region Dice
     void ThrowDice()
     {
         // throw 2 dice
-        int dice1 = Random.Range(1, 6);
-        int dice2 = Random.Range(1, 6);
-        
+        int dice1 = Random.Range(1, 7);
+        int dice2 = Random.Range(1, 7);
+
         // let the captain player choose which dice is day which is night
-        foreach(PlayerGameScript player in players)
+        foreach (PlayerGameScript player in players)
         {
             player.OpenDiceUIClientRpc(dice1, dice2);
         }
-    }
-    
-    //  used for testing
-    [Rpc(SendTo.Server, RequireOwnership = false)]
-    public void ThrowDiceServerRpc()
-    {
-        Debug.Log("Throw dice rpc called");
-        ThrowDice();
     }
 
     public void OnDayNightDiceOrderChosen(int day, int night)
@@ -282,7 +277,7 @@ public class GameManager : NetworkBehaviour
 
     async Task ThrowCombatDice(bool attacker = true)
     {
-        if(attacker) attacker_combat_dice.Value = -1;
+        if (attacker) attacker_combat_dice.Value = -1;
         else defender_combat_dice.Value = -1;
 
         if (attacker)
@@ -303,117 +298,24 @@ public class GameManager : NetworkBehaviour
         }
     }
 
-    void DrawCards()
+    [Rpc(SendTo.Everyone, RequireOwnership = false)]
+    public void SwitchDiceValuesClientRpc()
     {
-        // send an rpc to client and wait for confirmation they are done
-        foreach(PlayerGameScript player in players)
-        {
-            player.ChooseACardClientRpc();
-        }
+        DiceUI.GetComponent<DiceUIScript>().SwitchValues();
     }
 
-    async void StartPlayerTurn(int player_index)
+    [Rpc(SendTo.Everyone, RequireOwnership = false)]
+    public void CloseDiceDialogClientRpc()
     {
-        player_on_turn.Value = player_index;
-
-        currentPlayedCard.Value = new ActionCardData { cardID = "" };
-
-        players[player_on_turn.Value].GetComponent<PlayerGameScript>().GetPlayedActionCardIDRpc();
-
-        while(currentPlayedCard.Value.cardID == "")
-        {
-            await Task.Delay(100);
-        }
-
-        ExecutePlayerAction();
+        DiceUI.GetComponent<DiceUIScript>().CloseDiceDialog();
     }
 
-    [ServerRpc]
-    public void PlayerAction1EndedServerRPC()
-    {
-        ExecutePlayerAction(false);
-    }
+    #endregion
 
-    [ServerRpc]
-    public void PlayerAction2EndedServerRPC()
-    {
-        EndPlayerTurn();
-    }
-
-
-    public void ExecutePlayerAction(bool useDayOption = true)
-    {
-        // read the player card
-        Debug.Log(currentPlayedCard.Value.cardID);
-
-        ActionCard playedCard = actionCardLookup[currentPlayedCard.Value.cardID];
-
-        // Player script should hold this
-        // rpc to set these on player that is on turn
-        ActionCardOption card_action1 = playedCard.leftOption;
-        ActionCardOption card_action2 = playedCard.rightOption;
-
-        ActionCardOption cardOption = useDayOption ? card_action1 : card_action2;
-
-        if (cardOption == ActionCardOption.MoveForward || cardOption == ActionCardOption.MoveBackward)
-        {
-            // move player 
-            EndOfPlayerMovement(true, useDayOption);
-        }
-        else
-        {
-            // hand player their resources
-            LoadResourceToPlayerHold(cardOption);
-        }
-    }
-
-    async void EndOfPlayerMovement(bool mustPay = true, bool dayAction = true)
-    {
-        Debug.Log("End of player movement");
-
-        if (CheckBattleConditions())
-        {
-            Debug.Log("Entering battle phase");
-            StartBattlePhase();
-            while (playerBattleActive)
-            {
-                await Task.Delay(1000);
-            }
-            EndBattlePhase();
-            Debug.Log("End Of Battle");
-            await Task.Delay(1000);
-        }
-
-        if (!mustPay || GetPlayerSquareType() == SquareType.PirateLair)
-        {
-            if(GetPlayerSquareType() == SquareType.PirateLair)
-            {
-                // give player the special card if there
-            }
-            
-            // this should be called in a function that ends some animation of player turn end
-            if (dayAction) PlayerAction1EndedServerRPC();
-            else PlayerAction2EndedServerRPC();
-        }
-        else
-        {
-            TryTaxPlayer(dayAction);
-        }
-    }
-
-    void EndPlayerTurn()
-    {
-        // nothing for now, maybe usefull somehow
-    }
-
-    void LoadResourceToPlayerHold(ActionCardOption cardOption)
-    {
-        // make a player choose a hold to put resource into
-    }
-
+    #region Battle
     bool CheckBattleConditions()
     {
-        //if any players on the player square
+        // TODO - BOARD if any players on the player square
         return true;
     }
 
@@ -429,8 +331,35 @@ public class GameManager : NetworkBehaviour
         int opponent = await WaitForOpponentChoiceResponse();
 
         StartSingleBattle(opponent);
-        
+
     }
+    void EndBattlePhase()
+    {
+        // remove the combat ui from the screen
+        CloseBattleUIClientRpc();
+    }
+
+    // TODO - BOARD
+    List<int> GetPlayersOnBattleSquare()
+    {
+        List<int> result = new List<int>();
+
+        // get the square in question
+        for (int i = 0; i < players.Count; i++)
+        {
+            if (i == player_on_turn.Value) continue;
+
+            result.Add(i);
+
+            //if (players[i].IsOnSquare())
+            //{
+            //    result.Add(i);
+            //}
+        }
+
+        return result;
+    }
+
 
     private Task<int> WaitForOpponentChoiceResponse()
     {
@@ -446,13 +375,6 @@ public class GameManager : NetworkBehaviour
             opponentChoiceResponse.TrySetResult(player);
         }
     }
-
-    void EndBattlePhase()
-    {
-        // remove the combat ui from the screen
-        CloseBattleUIClientRpc();
-    }
-
     async void StartSingleBattle(int defender)
     {
         // initial setup
@@ -464,10 +386,10 @@ public class GameManager : NetworkBehaviour
         defender_cannon_tokens.Value = -1;
 
         Debug.Log("Battle between " + attacker + " and " + defender);
-        
+
         CombatUIScript UI_manager = CombatUI.GetComponent<CombatUIScript>();
 
-        foreach(PlayerGameScript p in players)
+        foreach (PlayerGameScript p in players)
         {
             p.SetupBattleUIClientRPC(attacker, defender, attackerHasLadyBeth > 0, defenderHasLadyBeth > 0);
         }
@@ -475,7 +397,7 @@ public class GameManager : NetworkBehaviour
         // Attacker adds cannon token
         UI_manager.BeginAttackerCannonChoiceClientRPC();
 
-        while(attacker_cannon_tokens.Value < 0)
+        while (attacker_cannon_tokens.Value < 0)
         {
             await Task.Delay(1000);
         }
@@ -493,12 +415,12 @@ public class GameManager : NetworkBehaviour
         if (await AllowSaransSaber(attacker, defender))
         {
             await ThrowCombatDice();
-            
+
             usedSaransSaber = true;
         }
 
 
-        if(attacker_combat_dice.Value == STAR_COMBAT_VALUE) // replace with star value
+        if (attacker_combat_dice.Value == STAR_COMBAT_VALUE)
         {
             ResolveBattleResult(attacker, defender);
             return;
@@ -517,8 +439,8 @@ public class GameManager : NetworkBehaviour
         }
 
         Debug.Log("Defender added tokens: " + defender_cannon_tokens.Value);
-        
-        
+
+
         // Defender throws dice
         await ThrowCombatDice(false);
         Debug.Log("Defender rolled: " + defender_combat_dice.Value);
@@ -547,7 +469,8 @@ public class GameManager : NetworkBehaviour
         {
             //attacker won battle
             ResolveBattleResult(attacker, defender);
-        }else
+        }
+        else
         {
             //defender won battle
             ResolveBattleResult(defender, attacker);
@@ -585,7 +508,7 @@ public class GameManager : NetworkBehaviour
     [Rpc(SendTo.Server)]
     public void ReturnSaransSaberResultServerRpc(bool used)
     {
-        if(saransSaberResponse != null)
+        if (saransSaberResponse != null)
         {
             saransSaberResponse.TrySetResult(used);
         }
@@ -602,12 +525,12 @@ public class GameManager : NetworkBehaviour
         else
         {
             CombatUI.GetComponent<CombatUIScript>().DisplayWinnerClientRpc(winner == player_on_turn.Value ? 1 : -1);
-            
+
             /*
              * winner has a choice of options:
              *  1) take everything from one enemy loot hold
              *  2) take one action card
-             *  3) give looser a cursed own action card  
+             *  3) give looser a cursed own action card -- ignore  
              */
 
 
@@ -618,98 +541,10 @@ public class GameManager : NetworkBehaviour
         playerBattleActive = false;
     }
 
-    async void TryTaxPlayer(bool dayAction)
-    {
-        if (true) //player has the needed resources
-        {
-            //remove the player resources
-        }
-        else
-        {
-            // remove the amount of the resources that the player has
 
-            await ThrowCombatDice();
-
-            // move the player back based on dice result
-            // 2 or 4 = move to port (coins) square
-            // 6 or 8 = move to sea (food) square
-            // 10 = move back to pirate lair
-            // star = stay put
-
-            if (attacker_combat_dice.Value != STAR_COMBAT_VALUE) // TODO: replace with star dice value
-            {
-                // move the player back
-
-                EndOfPlayerMovement(false, dayAction);
-            }
-        }
-    }
-
-    SquareType GetPlayerSquareType()
-    {
-        return SquareType.PirateLair;
-    }
-
-    List<int> GetPlayersOnBattleSquare()
-    {
-        List<int> result = new List<int>();
-
-        // get the square in question
-        for(int i = 0; i < players.Count; i++)
-        {
-            if (i == player_on_turn.Value) continue;
-
-            result.Add(i);
-
-            //if (players[i].IsOnSquare())
-            //{
-            //    result.Add(i);
-            //}
-        }
-
-        return result;
-    }
-
-    [Rpc(SendTo.Server)]
-    public void AddPlayerServerRPC(ulong playerNetworkObjectId)
-    {
-        NetworkObject playerNetworkObject = NetworkManager.Singleton.SpawnManager.SpawnedObjects[playerNetworkObjectId];
-        GameObject player = playerNetworkObject.gameObject;
-
-        players.Add(player.GetComponent<PlayerGameScript>());
-
-        player.GetComponent<PlayerGameScript>().player_index.Value = players.Count - 1;
-    }
-
-    [Rpc(SendTo.Everyone, RequireOwnership = false)]
-    public void SwitchDiceValuesClientRpc()
-    {
-        DiceUI.GetComponent<DiceUIScript>().SwitchValues();
-    }
-
-    [Rpc(SendTo.Everyone, RequireOwnership = false)]
-    public void CloseDiceDialogClientRpc()
-    {
-        DiceUI.GetComponent<DiceUIScript>().CloseDiceDialog();
-    }
-
+    #endregion
     
-
-
-    public PlayerGameScript GetOwnerPlayerScript(ulong clientId)
-    {
-        if (NetworkManager.Singleton.ConnectedClients.TryGetValue(clientId, out var client))
-        {
-            var playerObject = client.PlayerObject;
-            if (playerObject != null)
-            {
-                return playerObject.GetComponent<PlayerGameScript>();
-            }
-        }
-        return null;
-    }
-
-
+    #region BattleUI
     [Rpc(SendTo.Server)]
     public void SetAttackerCannonTokensServerRpc(int ammount)
     {
@@ -739,4 +574,191 @@ public class GameManager : NetworkBehaviour
     {
         CombatUI.GetComponent<CombatUIScript>().OnCombatEnd();
     }
+    #endregion
+
+    #region ActionCards
+    void DrawCards()
+    {
+        // send an rpc to client and wait for confirmation they are done
+        foreach (PlayerGameScript player in players)
+        {
+            player.ChooseACardClientRpc();
+        }
+    }
+
+    [ServerRpc]
+    public void PlayerAction1EndedServerRPC()
+    {
+        ExecutePlayerAction(false);
+    }
+
+    [ServerRpc]
+    public void PlayerAction2EndedServerRPC()
+    {
+        EndPlayerTurn();
+    }
+
+
+    public void ExecutePlayerAction(bool useDayOption = true)
+    {
+        // read the player card
+        Debug.Log(currentPlayedCard.Value.cardID);
+
+        ActionCard playedCard = actionCardLookup[currentPlayedCard.Value.cardID];
+
+        // Player script should hold this
+        // rpc to set these on player that is on turn
+        ActionCardOption card_action1 = playedCard.leftOption;
+        ActionCardOption card_action2 = playedCard.rightOption;
+
+        ActionCardOption cardOption = useDayOption ? card_action1 : card_action2;
+
+        if (cardOption == ActionCardOption.MoveForward || cardOption == ActionCardOption.MoveBackward)
+        {
+            // TODO: BOARD - move player 
+            // move for day_dice_value.Value
+            
+            EndOfPlayerMovement(true, useDayOption);
+        }
+        else
+        {
+            // hand player their resources
+            LoadResourceToPlayerHold(cardOption);
+        }
+    }
+    #endregion
+
+
+    async void EndOfPlayerMovement(bool mustPay = true, bool dayAction = true)
+    {
+        Debug.Log("End of player movement");
+
+        if (CheckBattleConditions())
+        {
+            Debug.Log("Entering battle phase");
+            StartBattlePhase();
+            while (playerBattleActive)
+            {
+                await Task.Delay(1000);
+            }
+            EndBattlePhase();
+            Debug.Log("End Of Battle");
+            await Task.Delay(1000);
+        }
+
+        if (!mustPay || GetPlayerSquareType() == SquareType.PirateLair)
+        {
+            if(GetPlayerSquareType() == SquareType.PirateLair)
+            {
+                // TODO: BOARD - give player the special card if there
+            }
+            
+            // TODO : this should be called in a function that ends some animation of player turn end
+            if (dayAction) PlayerAction1EndedServerRPC();
+            else PlayerAction2EndedServerRPC();
+        }
+        else
+        {
+            TryTaxPlayer(dayAction);
+        }
+    }
+
+    void LoadResourceToPlayerHold(ActionCardOption cardOption)
+    {
+        // TODO - DUJE make a player choose a hold to put resource into
+    }
+
+    async void TryTaxPlayer(bool dayAction)
+    {
+        if (true) //TODO - DUJE player has the needed resources
+        {
+            //TODO - DUJE remove the player resources
+        }
+        else
+        {
+            // TODO - DUJE remove the amount of the resources that the player has
+
+            await ThrowCombatDice();
+
+
+            // TODO - BOARD
+            // move the player back based on dice result
+
+            // 2 or 4 = move to port (coins) square
+            // 6 or 8 = move to sea (food) square
+            // 10 = move back to pirate lair
+            // star = stay put
+
+            if (attacker_combat_dice.Value != STAR_COMBAT_VALUE)
+            {
+                // TODO: move the player back
+
+                EndOfPlayerMovement(false, dayAction);
+            }
+        }
+    }
+
+
+    #region Util
+    // im not sure this works, but if you need it xd ( better to just call all player scripts in loop and check if owner )
+    public PlayerGameScript GetOwnerPlayerScript(ulong clientId)
+    {
+        if (NetworkManager.Singleton.ConnectedClients.TryGetValue(clientId, out var client))
+        {
+            var playerObject = client.PlayerObject;
+            if (playerObject != null)
+            {
+                return playerObject.GetComponent<PlayerGameScript>();
+            }
+        }
+        return null;
+    }
+
+    // TODO : BOARD - ovo bi trebal bit serverRpc ili trebaju svi klijenti updateat svoj player objekt za sve playere
+    SquareType GetPlayerSquareType()
+    {
+        //TODO return what player is on
+        // player_on_turn.Value
+        return SquareType.PirateLair;
+    }
+
+    [Rpc(SendTo.Server)]
+    public void AddPlayerServerRPC(ulong playerNetworkObjectId)
+    {
+        NetworkObject playerNetworkObject = NetworkManager.Singleton.SpawnManager.SpawnedObjects[playerNetworkObjectId];
+        GameObject player = playerNetworkObject.gameObject;
+
+        players.Add(player.GetComponent<PlayerGameScript>());
+
+        player.GetComponent<PlayerGameScript>().player_index.Value = players.Count - 1;
+    }
+
+    public async Task WaitForPlayers()
+    {
+        while (players_called_ready < players.Count)
+        {
+            await Task.Delay(1000);
+        }
+
+        players_called_ready = 0;
+    }
+
+    [Rpc(SendTo.Server)]
+    public void PlayerIsReadyServerRpc()
+    {
+        players_called_ready++;
+    }
+
+    // TODO : maybe remove, maybe usefull at some point
+    [Rpc(SendTo.Server)]
+    public void PlayerEndedTurnServerRpc(int player)
+    {
+        if (player == player_on_turn.Value)
+        {
+            playerCalledTurnOver = true;
+        }
+    }
+    #endregion
+
+
 }

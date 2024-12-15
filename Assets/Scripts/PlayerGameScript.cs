@@ -64,6 +64,7 @@ public class PlayerGameScript : NetworkBehaviour
         }
     }
     
+    // Osigurava da svaki player ima listu drugih na istom indexu
     [Rpc(SendTo.NotServer, RequireOwnership = false)]
     public void SetupListOnClientRpc(int index)
     {
@@ -76,6 +77,7 @@ public class PlayerGameScript : NetworkBehaviour
         }
     }
 
+    // Lokalno postavljanje playera
     async void SetupListOnClient(int index)
     {
         while (GameManager.instance.players.Count < index)
@@ -87,6 +89,7 @@ public class PlayerGameScript : NetworkBehaviour
 
     }
 
+    // TODO : DOMINIK
     public void InitializeDeck()
     {
         // add action cards to deck
@@ -95,6 +98,7 @@ public class PlayerGameScript : NetworkBehaviour
         ui.UpdateActionCards(gameObject);
     }
 
+    // TODO - DUJE - ovak mozes dodavat i makivat Holdove
     public void AddInitialResources()
     {
         Hold hold1 = holds[0];
@@ -106,7 +110,9 @@ public class PlayerGameScript : NetworkBehaviour
         hold2.ammount = 3;
     }
 
-    public void AddResources(GameManager.TokenType token, int ammount)
+    // TODO - DUJE - ovo pozivas da bi dodal resurse u hold ( ako ima free space sam doda - treba prikazat, ako nema free space treba zamijenit )
+
+    async public void AddResources(GameManager.TokenType token, int ammount)
     {
         int index_of_freeHold = -1;
 
@@ -131,14 +137,25 @@ public class PlayerGameScript : NetworkBehaviour
             replaceHold_ammount = ammount;
             replaceHold_token = token;
 
-            ReplaceResource();
+            // TODO - DUJE - ovo pokrece odabir holda koji swapas
+            await ReplaceResource();
         }
+
+        // TODO - DUJE - refresh ui za prikaz dostupnih resursi
 
     }
 
-    public void ReplaceResource()
+    async public Task ReplaceResource()
     {
-        // open the needed ui
+        // TODO - DUJE - open the needed ui
+
+        // wait for the replace index to be chosen
+        while(replaceHold_index < 0)
+        {
+            await Task.Delay(100);
+        }
+
+        OnReplaceResourceHoldChosen();
     }
 
     public void OnReplaceResourceHoldChosen()
@@ -146,8 +163,6 @@ public class PlayerGameScript : NetworkBehaviour
         Hold h = holds[replaceHold_index];
         h.tokenType = replaceHold_token;
         h.ammount = replaceHold_ammount;
-
-        // display the choice
 
         replaceHold_index = -1;
     }
@@ -157,6 +172,8 @@ public class PlayerGameScript : NetworkBehaviour
     public void ChooseACardClientRpc()
     {
         if (!IsOwner) return;
+
+        // TODO - DOMINIK
 
         // draw a card
         // draw 3 first round, 1 others
