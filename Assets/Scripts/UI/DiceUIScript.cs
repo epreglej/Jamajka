@@ -40,7 +40,6 @@ public class DiceUIScript : MonoBehaviour
         GameManager.instance.SwitchDiceValuesClientRpc();
     }
 
-    [Rpc(SendTo.Everyone, RequireOwnership = false)]
     public void SwitchValues()
     {
         Debug.Log("Switch numbers called");

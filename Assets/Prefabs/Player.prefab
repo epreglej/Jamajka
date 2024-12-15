@@ -74,10 +74,10 @@ MonoBehaviour:
   player_index:
     m_InternalValue: 0
   deck: []
-  action_card_1: {fileID: 11400000, guid: 3acb3ef9c51d5af4c804fe1ed49da69c, type: 2}
-  action_card_2: {fileID: 11400000, guid: 1902aef2db2952e45b3febded96a0e49, type: 2}
-  action_card_3: {fileID: 11400000, guid: dce0a93c8abd03c43afc449d49e30ad6, type: 2}
-  action_card_4: {fileID: 11400000, guid: 92f4129a6e7f97245ae780ee970f90f7, type: 2}
+  action_card_1: {fileID: 11400000, guid: b5d153934eeafad4f87458e4bc6808aa, type: 2}
+  action_card_2: {fileID: 11400000, guid: 1c9f729ce6bf25e40b8cffac53e47749, type: 2}
+  action_card_3: {fileID: 11400000, guid: bf6813490fd60784590e0652e5a44158, type: 2}
+  action_card_4: {fileID: 11400000, guid: 57f786648c26c0044b0d5690e27cc022, type: 2}
   hasMorgansMap: 0
   hasSaransSaber: 0
   hasLadyBeth: 0

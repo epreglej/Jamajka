@@ -6,7 +6,7 @@ using System.Collections.Generic;
 
 public class PlayerGameScript : NetworkBehaviour
 {
-    public NetworkVariable<int> player_index = new NetworkVariable<int>(0);
+    public NetworkVariable<int> player_index = new NetworkVariable<int>(-1);
 
     // 
     GameManager.ActionCardOption cardOption1 = GameManager.ActionCardOption.None;
@@ -62,6 +62,28 @@ public class PlayerGameScript : NetworkBehaviour
             GameManager.instance.AddPlayerServerRPC(playerNetworkObjectId);
             InitializeDeck();
         }
+    }
+    
+    [Rpc(SendTo.NotServer, RequireOwnership = false)]
+    public void SetupListOnClientRpc(int index)
+    {
+        Debug.Log("Setting player to index " + index);
+        SetupListOnClient(index);
+
+        if(index != player_index.Value)
+        {
+            Debug.LogError("WHATAFAK, PlayerGameScript");
+        }
+    }
+
+    async void SetupListOnClient(int index)
+    {
+        while (GameManager.instance.players.Count < index)
+        {
+            await Task.Delay(10);
+        }
+
+        if (GameManager.instance.players.Count == index) GameManager.instance.players.Add(this);
 
     }
 
@@ -202,6 +224,8 @@ public class PlayerGameScript : NetworkBehaviour
         else if (replace_action_card_number == 2) playedCard = action_card_2;
         else if (replace_action_card_number == 3) playedCard = action_card_3;
         else playedCard = action_card_4;
+
+        Debug.Log("Getting card id: " + playedCard.cardID + ", on index " + replace_action_card_number);
   
         GameManager.instance.currentPlayedCard.Value = new GameManager.ActionCardData { cardID = playedCard.cardID };
     }
@@ -211,5 +235,17 @@ public class PlayerGameScript : NetworkBehaviour
     {
         cardOption1 = o1;
         cardOption2 = o2;
+    }
+
+    [Rpc(SendTo.Owner)]
+    public void SetupBattleUIClientRPC(int a, int d, bool a_has_ladybeth = false, bool d_has_ladybeth = false)
+    {
+        GameManager.instance.CombatUI.GetComponent<CombatUIScript>().SetPlayersInBattle(a, d, player_index.Value, a_has_ladybeth, d_has_ladybeth);
+    }
+
+    [Rpc(SendTo.Owner)]
+    public void OpenOpponentChoiceClientRpc(int[] players)
+    {
+        GameManager.instance.CombatUI.GetComponent<CombatUIScript>().OpenOpponentChoice(players);
     }
 }

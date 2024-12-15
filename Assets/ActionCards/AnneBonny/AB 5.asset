@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a3a5cc1cb1a3f5843a7bb3431fdbe284, type: 3}
   m_Name: AB 5
   m_EditorClassIdentifier: 
+  cardID: AB-CF
   leftOption: 4
   rightOption: 3
   backgroundImage: {fileID: 654534087, guid: 67ebabcf946bf304a93763a40415de38, type: 3}

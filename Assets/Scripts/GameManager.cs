@@ -6,13 +6,13 @@ using System.Threading;
 
 public class GameManager : NetworkBehaviour
 {
-    const int STAR_COMBAT_VALUE = -1;
+    const int STAR_COMBAT_VALUE = 1000;
 
     public GameObject playerPrefab;
 
     public static GameManager instance { get; private set; }
 
-    List<PlayerGameScript> players = new List<PlayerGameScript>();
+    public List<PlayerGameScript> players = new List<PlayerGameScript>();
 
     public NetworkVariable<int> captain_player = new NetworkVariable<int>(0);
     public NetworkVariable<int> player_on_turn = new NetworkVariable<int>(0);
@@ -21,15 +21,25 @@ public class GameManager : NetworkBehaviour
     public NetworkVariable<int> night_dice_value = new NetworkVariable<int>();
     public NetworkVariable<int> combat_dice_value = new NetworkVariable<int>();
 
+    public NetworkVariable<int> attacker_combat_dice = new NetworkVariable<int>();
+    public NetworkVariable<int> attacker_cannon_tokens = new NetworkVariable<int>();
+    public NetworkVariable<int> defender_combat_dice = new NetworkVariable<int>();
+    public NetworkVariable<int> defender_cannon_tokens = new NetworkVariable<int>();
+
     public bool playerReachedEndSquare = false;
 
     private int players_called_ready = 0;
     private bool playerCalledTurnOver = false;
-    private bool playerBattleActive = false;
+    public bool playerBattleActive = false;
+
+    private TaskCompletionSource<bool> saransSaberResponse;
+    private TaskCompletionSource<int> opponentChoiceResponse;
 
     public Canvas DiceUI;
     public Canvas CombatUI;
     public Canvas ActionCardUI;
+
+    public static List<int> COMBAT_DICE_VALUES = new List<int>{2, 4, 6, 8, STAR_COMBAT_VALUE};
 
     public enum TreasureCard
     {
@@ -76,11 +86,6 @@ public class GameManager : NetworkBehaviour
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
-
-        Debug.Log("Hello world");
-
-        Debug.Log(IsHost);
-
         if (instance != null && instance != this)
         {
             Destroy(this);
@@ -89,15 +94,24 @@ public class GameManager : NetworkBehaviour
         {
             instance = this;
         }
+
+        Debug.Log("Hello world");
+
+        Debug.Log(IsHost);
+
+        int clients = NetworkManager.Singleton.ConnectedClients.Count;
+        Debug.Log("Conected clients: " + clients);
     }
 
     private void Start()
     {
         ActionCard[] allCards = Resources.LoadAll<ActionCard>("ActionCards");
+
         foreach (ActionCard card in allCards)
         {
             actionCardLookup[card.cardID] = card;
         }
+        Debug.Log("Loaded " + allCards.Length + " action cards");
     }
 
     private void Update()
@@ -117,9 +131,16 @@ public class GameManager : NetworkBehaviour
         if (players.Count < 2)
         {
             // handle error
-            
+
         }
-        // shuffle players if needed
+        else
+        {
+            for(int i = 0; i < players.Count; i++)
+            {
+                PlayerGameScript player = players[i].GetComponent<PlayerGameScript>();
+                player.SetupListOnClientRpc(i);
+            }
+        }
 
         // distribute initial resources
         DistributeStartingResources();
@@ -259,10 +280,27 @@ public class GameManager : NetworkBehaviour
         CloseDiceDialogClientRpc();
     }
 
-    int ThrowCombatDice()
+    async Task ThrowCombatDice(bool attacker = true)
     {
-        // returns 2,4,8,10 or star(-1)
-        return 0;
+        if(attacker) attacker_combat_dice.Value = -1;
+        else defender_combat_dice.Value = -1;
+
+        if (attacker)
+        {
+            CombatUI.GetComponent<CombatUIScript>().RollAttackerDicePhaseClientRPC();
+            while (attacker_combat_dice.Value < 0)
+            {
+                await Task.Delay(1000);
+            }
+        }
+        else
+        {
+            CombatUI.GetComponent<CombatUIScript>().RollDefenderDicePhaseClientRPC();
+            while (defender_combat_dice.Value < 0)
+            {
+                await Task.Delay(1000);
+            }
+        }
     }
 
     void DrawCards()
@@ -274,11 +312,18 @@ public class GameManager : NetworkBehaviour
         }
     }
 
-    void StartPlayerTurn(int player_index)
+    async void StartPlayerTurn(int player_index)
     {
         player_on_turn.Value = player_index;
 
+        currentPlayedCard.Value = new ActionCardData { cardID = "" };
+
         players[player_on_turn.Value].GetComponent<PlayerGameScript>().GetPlayedActionCardIDRpc();
+
+        while(currentPlayedCard.Value.cardID == "")
+        {
+            await Task.Delay(100);
+        }
 
         ExecutePlayerAction();
     }
@@ -299,6 +344,8 @@ public class GameManager : NetworkBehaviour
     public void ExecutePlayerAction(bool useDayOption = true)
     {
         // read the player card
+        Debug.Log(currentPlayedCard.Value.cardID);
+
         ActionCard playedCard = actionCardLookup[currentPlayedCard.Value.cardID];
 
         // Player script should hold this
@@ -322,14 +369,19 @@ public class GameManager : NetworkBehaviour
 
     async void EndOfPlayerMovement(bool mustPay = true, bool dayAction = true)
     {
+        Debug.Log("End of player movement");
+
         if (CheckBattleConditions())
         {
-
+            Debug.Log("Entering battle phase");
             StartBattlePhase();
             while (playerBattleActive)
             {
                 await Task.Delay(1000);
             }
+            EndBattlePhase();
+            Debug.Log("End Of Battle");
+            await Task.Delay(1000);
         }
 
         if (!mustPay || GetPlayerSquareType() == SquareType.PirateLair)
@@ -365,62 +417,133 @@ public class GameManager : NetworkBehaviour
         return true;
     }
 
-    void StartBattlePhase()
+    async void StartBattlePhase()
     {
         // let player choose the opponent if multiple people on the square
+        playerBattleActive = true;
+
         List<int> opponents = GetPlayersOnBattleSquare();
 
-        int opponent = 0;
+        players[player_on_turn.Value].OpenOpponentChoiceClientRpc(opponents.ToArray());
+
+        int opponent = await WaitForOpponentChoiceResponse();
 
         StartSingleBattle(opponent);
         
     }
 
-    void StartSingleBattle(int defender)
+    private Task<int> WaitForOpponentChoiceResponse()
     {
+        opponentChoiceResponse = new TaskCompletionSource<int>();
+        return opponentChoiceResponse.Task;
+    }
+
+    [Rpc(SendTo.Server)]
+    public void ReturnOpponentChoiceResultServerRpc(int player)
+    {
+        if (opponentChoiceResponse != null)
+        {
+            opponentChoiceResponse.TrySetResult(player);
+        }
+    }
+
+    void EndBattlePhase()
+    {
+        // remove the combat ui from the screen
+        CloseBattleUIClientRpc();
+    }
+
+    async void StartSingleBattle(int defender)
+    {
+        // initial setup
         int attacker = player_on_turn.Value;
+        int attackerHasLadyBeth = players[attacker].hasLadyBeth ? 2 : 0;
+        int defenderHasLadyBeth = players[defender].hasLadyBeth ? 2 : 0;
+
+        attacker_cannon_tokens.Value = -1;
+        defender_cannon_tokens.Value = -1;
+
+        Debug.Log("Battle between " + attacker + " and " + defender);
+        
+        CombatUIScript UI_manager = CombatUI.GetComponent<CombatUIScript>();
+
+        foreach(PlayerGameScript p in players)
+        {
+            p.SetupBattleUIClientRPC(attacker, defender, attackerHasLadyBeth > 0, defenderHasLadyBeth > 0);
+        }
 
         // Attacker adds cannon token
-        int attacker_tokens = 0; // replace with function call
+        UI_manager.BeginAttackerCannonChoiceClientRPC();
 
-        int attacker_dice = ThrowCombatDice();
+        while(attacker_cannon_tokens.Value < 0)
+        {
+            await Task.Delay(1000);
+        }
+
+        Debug.Log("Attacker added tokens: " + attacker_cannon_tokens.Value);
+
+        // Attacker throws dice
+        Debug.Log("Attacker needs to throw dice");
+        await ThrowCombatDice();
+
+        Debug.Log("Attacker rolled: " + attacker_combat_dice.Value);
+
         bool usedSaransSaber = false;
 
-        if (AllowSaransSaber(attacker, defender))
+        if (await AllowSaransSaber(attacker, defender))
         {
-            attacker_dice = ThrowCombatDice();
+            await ThrowCombatDice();
+            
             usedSaransSaber = true;
         }
 
-        if(attacker_dice == STAR_COMBAT_VALUE) // replace with star value
+
+        if(attacker_combat_dice.Value == STAR_COMBAT_VALUE) // replace with star value
         {
             ResolveBattleResult(attacker, defender);
             return;
         }
 
-        int defender_tokens = 0; // replace with function call
+        int attacker_points = attacker_combat_dice.Value + attacker_cannon_tokens.Value + attackerHasLadyBeth;
+        CombatUI.GetComponent<CombatUIScript>().UpdateTotalResultClientRpc(true, attacker_points);
 
-        int defender_dice = ThrowCombatDice();
+        // Defender adds cannon token
+        Debug.Log("Defender gets to add tokens");
+        UI_manager.BeginDefenderCannonChoiceClientRPC();
 
-        if (!usedSaransSaber && AllowSaransSaber(attacker, defender))
+        while (defender_cannon_tokens.Value < 0)
         {
-            defender_dice = ThrowCombatDice();
+            await Task.Delay(1000);
         }
 
-        if (defender_dice == STAR_COMBAT_VALUE) // replace with star value
+        Debug.Log("Defender added tokens: " + defender_cannon_tokens.Value);
+        
+        
+        // Defender throws dice
+        await ThrowCombatDice(false);
+        Debug.Log("Defender rolled: " + defender_combat_dice.Value);
+
+        if (!usedSaransSaber && await AllowSaransSaber(attacker, defender))
+        {
+            await ThrowCombatDice(false);
+        }
+
+        if (defender_combat_dice.Value == STAR_COMBAT_VALUE) // replace with star value
         {
             ResolveBattleResult(defender, attacker);
             return;
         }
 
-        int attackerHasLadyBeth = 2;
-        int defenderHasLadyBeth = 0;
-        
-        if (attacker_dice + attacker_tokens + attackerHasLadyBeth == defender_dice + defender_tokens + defenderHasLadyBeth)
+        int defender_points = defender_combat_dice.Value + defender_cannon_tokens.Value + defenderHasLadyBeth;
+        CombatUI.GetComponent<CombatUIScript>().UpdateTotalResultClientRpc(false, defender_points);
+
+        // Results of battle
+        if (attacker_points == defender_points)
         {
             // tie, nothing happens
+            ResolveBattleResult(-1, -1);
         }
-        else if (attacker_dice + attacker_tokens + attackerHasLadyBeth > defender_dice + defender_tokens + defenderHasLadyBeth)
+        else if (attacker_points > defender_points)
         {
             //attacker won battle
             ResolveBattleResult(attacker, defender);
@@ -431,44 +554,71 @@ public class GameManager : NetworkBehaviour
         }
     }
 
-    bool AllowSaransSaber(int attacker, int defender)
+    async Task<bool> AllowSaransSaber(int attacker, int defender)
     {
-        bool attackerHasActionCard = false;
-        bool defenderHasActionCard = false;
+
+        bool attackerHasActionCard = players[attacker].hasSaransSaber;
+        bool defenderHasActionCard = players[defender].hasSaransSaber;
 
         if (attackerHasActionCard)
         {
-            // Ask for reroll confiromation
-            bool reroll = false;
+            CombatUI.GetComponent<CombatUIScript>().EnableSarabsSaberClientRpc(true);
 
-            return reroll;
+            return await WaitForSaransSaberResponse();
         }
+
         if (defenderHasActionCard)
         {
-            // Ask for reroll confiromation
-            bool reroll = false;
-
-            return reroll;
+            CombatUI.GetComponent<CombatUIScript>().EnableSarabsSaberClientRpc(false);
+            return await WaitForSaransSaberResponse();
         }
 
         return false;
     }
 
-    void ResolveBattleResult(int winner, int loser)
+    private Task<bool> WaitForSaransSaberResponse()
+    {
+        saransSaberResponse = new TaskCompletionSource<bool>();
+        return saransSaberResponse.Task;
+    }
+
+    [Rpc(SendTo.Server)]
+    public void ReturnSaransSaberResultServerRpc(bool used)
+    {
+        if(saransSaberResponse != null)
+        {
+            saransSaberResponse.TrySetResult(used);
+        }
+    }
+
+    async void ResolveBattleResult(int winner, int loser)
     {
         // give the player the choice of win spoils
+        if (winner == -1)
+        {
+            // its a tie
+            CombatUI.GetComponent<CombatUIScript>().DisplayWinnerClientRpc(0);
+        }
+        else
+        {
+            CombatUI.GetComponent<CombatUIScript>().DisplayWinnerClientRpc(winner == player_on_turn.Value ? 1 : -1);
+            
+            /*
+             * winner has a choice of options:
+             *  1) take everything from one enemy loot hold
+             *  2) take one action card
+             *  3) give looser a cursed own action card  
+             */
 
-        /*
-         * winner has a choice of options:
-         *  1) take everything from one enemy loot hold
-         *  2) take one action card
-         *  3) give looser a cursed own action card  
-         */
+
+        }
+
+        await Task.Delay(5000);
 
         playerBattleActive = false;
     }
 
-    void TryTaxPlayer(bool dayAction)
+    async void TryTaxPlayer(bool dayAction)
     {
         if (true) //player has the needed resources
         {
@@ -478,7 +628,7 @@ public class GameManager : NetworkBehaviour
         {
             // remove the amount of the resources that the player has
 
-            int result = ThrowCombatDice();
+            await ThrowCombatDice();
 
             // move the player back based on dice result
             // 2 or 4 = move to port (coins) square
@@ -486,7 +636,7 @@ public class GameManager : NetworkBehaviour
             // 10 = move back to pirate lair
             // star = stay put
 
-            if (result != STAR_COMBAT_VALUE) // TODO: replace with star dice value
+            if (attacker_combat_dice.Value != STAR_COMBAT_VALUE) // TODO: replace with star dice value
             {
                 // move the player back
 
@@ -509,6 +659,8 @@ public class GameManager : NetworkBehaviour
         {
             if (i == player_on_turn.Value) continue;
 
+            result.Add(i);
+
             //if (players[i].IsOnSquare())
             //{
             //    result.Add(i);
@@ -518,7 +670,7 @@ public class GameManager : NetworkBehaviour
         return result;
     }
 
-    [Rpc(SendTo.Server, RequireOwnership = false)]
+    [Rpc(SendTo.Server)]
     public void AddPlayerServerRPC(ulong playerNetworkObjectId)
     {
         NetworkObject playerNetworkObject = NetworkManager.Singleton.SpawnManager.SpawnedObjects[playerNetworkObjectId];
@@ -541,6 +693,9 @@ public class GameManager : NetworkBehaviour
         DiceUI.GetComponent<DiceUIScript>().CloseDiceDialog();
     }
 
+    
+
+
     public PlayerGameScript GetOwnerPlayerScript(ulong clientId)
     {
         if (NetworkManager.Singleton.ConnectedClients.TryGetValue(clientId, out var client))
@@ -552,5 +707,36 @@ public class GameManager : NetworkBehaviour
             }
         }
         return null;
+    }
+
+
+    [Rpc(SendTo.Server)]
+    public void SetAttackerCannonTokensServerRpc(int ammount)
+    {
+        attacker_cannon_tokens.Value = ammount;
+    }
+
+    [Rpc(SendTo.Server)]
+    public void SetDefenderCannonTokensServerRpc(int ammount)
+    {
+        defender_cannon_tokens.Value = ammount;
+    }
+
+    [Rpc(SendTo.Server)]
+    public void SetAttackerDiceServerRpc(int ammount)
+    {
+        attacker_combat_dice.Value = ammount;
+    }
+
+    [Rpc(SendTo.Server)]
+    public void SetDefenderDiceServerRpc(int ammount)
+    {
+        defender_combat_dice.Value = ammount;
+    }
+
+    [Rpc(SendTo.Everyone, RequireOwnership = false)]
+    public void CloseBattleUIClientRpc()
+    {
+        CombatUI.GetComponent<CombatUIScript>().OnCombatEnd();
     }
 }
