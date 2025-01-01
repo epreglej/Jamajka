@@ -2,13 +2,15 @@ using UnityEngine;
 using Unity.Netcode;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using Unity.Collections;
 
 
 public class PlayerGameScript : NetworkBehaviour
 {
+    public string username = string.Empty;
     public NetworkVariable<int> player_index = new NetworkVariable<int>(-1);
 
-    // 
+    // card options
     GameManager.ActionCardOption cardOption1 = GameManager.ActionCardOption.None;
     GameManager.ActionCardOption cardOption2 = GameManager.ActionCardOption.None;
 
@@ -25,7 +27,7 @@ public class PlayerGameScript : NetworkBehaviour
 
     // hold varables
     private GameManager.TokenType replaceHold_token;
-    private int replaceHold_ammount;
+    private int replaceHold_amount;
     private int replaceHold_index = -1;
 
     // action cards
@@ -37,7 +39,12 @@ public class PlayerGameScript : NetworkBehaviour
     public struct Hold
     {
         public GameManager.TokenType tokenType;
-        public int ammount;
+        public int amount;
+    }
+
+    public void Awake()
+    {
+        username = "Player" + Random.Range(1,1000);
     }
 
     public override void OnNetworkSpawn()
@@ -48,7 +55,7 @@ public class PlayerGameScript : NetworkBehaviour
         {
             Hold h = new();
             h.tokenType = GameManager.TokenType.None;
-            h.ammount = 0;
+            h.amount = 0;
 
             holds.Add(h);
         }    
@@ -103,16 +110,16 @@ public class PlayerGameScript : NetworkBehaviour
     {
         Hold hold1 = holds[0];
         hold1.tokenType = GameManager.TokenType.Food;
-        hold1.ammount = 3;
+        hold1.amount = 3;
 
         Hold hold2 = holds[1];
         hold2.tokenType = GameManager.TokenType.Gold;
-        hold2.ammount = 3;
+        hold2.amount = 3;
     }
 
     // TODO - DUJE - ovo pozivas da bi dodal resurse u hold ( ako ima free space sam doda - treba prikazat, ako nema free space treba zamijenit )
 
-    async public void AddResources(GameManager.TokenType token, int ammount)
+    async public void AddResources(GameManager.TokenType token, int amount)
     {
         int index_of_freeHold = -1;
 
@@ -130,11 +137,11 @@ public class PlayerGameScript : NetworkBehaviour
         {
             Hold h = holds[index_of_freeHold];
             h.tokenType = token;
-            h.ammount = ammount;
+            h.amount = amount;
         }
         else
         {
-            replaceHold_ammount = ammount;
+            replaceHold_amount = amount;
             replaceHold_token = token;
 
             // TODO - DUJE - ovo pokrece odabir holda koji swapas
@@ -162,7 +169,7 @@ public class PlayerGameScript : NetworkBehaviour
     {
         Hold h = holds[replaceHold_index];
         h.tokenType = replaceHold_token;
-        h.ammount = replaceHold_ammount;
+        h.amount = replaceHold_amount;
 
         replaceHold_index = -1;
     }

@@ -3,16 +3,19 @@ using UnityEngine;
 using Unity.Netcode;
 using System.Threading.Tasks;
 using System.Threading;
+using Unity.Collections;
 
 public class GameManager : NetworkBehaviour
 {
     const int STAR_COMBAT_VALUE = 1000;
 
     public GameObject playerPrefab;
+    public MainMenuUIScript mainMenuUIScript;
 
     public static GameManager instance { get; private set; }
 
     public List<PlayerGameScript> players = new List<PlayerGameScript>();
+    public NetworkList<FixedString32Bytes> usernames = new NetworkList<FixedString32Bytes>();
 
     public NetworkVariable<int> captain_player = new NetworkVariable<int>(0);
     public NetworkVariable<int> player_on_turn = new NetworkVariable<int>(0);
@@ -102,11 +105,8 @@ public class GameManager : NetworkBehaviour
         }
 
         Debug.Log("Hello world");
-
         Debug.Log(IsHost);
-
-        int clients = NetworkManager.Singleton.ConnectedClients.Count;
-        Debug.Log("Conected clients: " + clients);
+        Debug.Log("Conected clients: " + NetworkManager.Singleton.ConnectedClients.Count);
     }
 
     private void Start()
@@ -726,11 +726,20 @@ public class GameManager : NetworkBehaviour
     public void AddPlayerServerRPC(ulong playerNetworkObjectId)
     {
         NetworkObject playerNetworkObject = NetworkManager.Singleton.SpawnManager.SpawnedObjects[playerNetworkObjectId];
-        GameObject player = playerNetworkObject.gameObject;
+        PlayerGameScript player = playerNetworkObject.gameObject.GetComponent<PlayerGameScript>();
 
-        players.Add(player.GetComponent<PlayerGameScript>());
+        players.Add(player);
+        usernames.Add(player.username);
 
-        player.GetComponent<PlayerGameScript>().player_index.Value = players.Count - 1;
+        player.player_index.Value = players.Count - 1;
+
+        // UpdatePlayerListUIClientRpc();
+    }
+
+    [ClientRpc]
+    public void UpdatePlayerListUIClientRpc()
+    {
+        mainMenuUIScript.UpdatePlayerListUI();
     }
 
     public async Task WaitForPlayers()
