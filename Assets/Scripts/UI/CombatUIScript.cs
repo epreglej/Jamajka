@@ -65,17 +65,27 @@ public class CombatUIScript : NetworkBehaviour
         }
 
         int i = 1;
-        foreach(int player in players)
+        
+        foreach (int player in players)
         {
             string child_name = "Opponent Choice " + i;
 
             Button choice_button = container.Find(child_name).GetComponent<Button>();
+
+            foreach (var e in GameManager.instance.players) 
+            {
+                if(e.player_index.Value == player)
+                {
+                    choice_button.GetComponentInChildren<TMP_Text>().text = e.username;
+                }
+            }
 
             choice_button.gameObject.SetActive(true);
             choice_button.onClick.RemoveAllListeners();
             choice_button.onClick.AddListener(() => { OpponentChoicePressed(player); });
             i++;
         }
+        
     }
 
     public void OpponentChoicePressed(int player)

@@ -44,11 +44,6 @@ public class MainMenuUIScript : MonoBehaviour
                 playerLabelList[i].text = GameManager.instance.usernames[i].ToString();
                 playerLabelList[i].gameObject.SetActive(true);
             }
-
-            for (int i = 0; i < GameManager.instance.usernames.Count; i++)
-            {
-                Debug.Log(GameManager.instance.usernames[i].ToString());
-            }
         }
     }
 
