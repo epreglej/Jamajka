@@ -16,13 +16,14 @@ public class PlayerGameScript : NetworkBehaviour
 
     public List<Hold> holds = new List<Hold>();
     public List<ActionCard> deck = new List<ActionCard>();
+    public List<ActionCard> usedCards = new List<ActionCard>();
 
     // action cards in hand
     private int replace_action_card_number = -1; // last used card (1, 2, 3 or 4)
-    public ActionCard action_card_1;
-    public ActionCard action_card_2;
-    public ActionCard action_card_3;
-    public ActionCard action_card_4; // only if morgans map
+    public ActionCard action_card_1 = null;
+    public ActionCard action_card_2 = null;
+    public ActionCard action_card_3 = null;
+    public ActionCard action_card_4 = null; // only if morgans map
 
 
     // hold varables
@@ -67,7 +68,6 @@ public class PlayerGameScript : NetworkBehaviour
         {
             ulong playerNetworkObjectId = GetComponent<NetworkObject>().NetworkObjectId;
             GameManager.instance.AddPlayerServerRPC(playerNetworkObjectId);
-            InitializeDeck();
         }
     }
     
@@ -96,10 +96,30 @@ public class PlayerGameScript : NetworkBehaviour
 
     }
 
-    // TODO : DOMINIK
-    public void InitializeDeck()
+    [Rpc(SendTo.Owner)]
+    public void InitializeDeckClientRpc()
     {
         // add action cards to deck
+        ActionCard[] allCards = Resources.LoadAll<ActionCard>("ActionCards");
+
+        string[] decks = { "AB", "ED", "JR", "MR", "OL", "SB"};
+
+        List<ActionCard> myCards = new List<ActionCard>();
+        string playerId = decks[player_index.Value];
+        Debug.Log("Loading deck " + playerId + ", " + player_index.Value);
+
+        foreach (var card in allCards)
+        {
+            if (card.cardID.StartsWith(playerId))
+            {
+                myCards.Add(card);
+            }
+        }
+
+        deck = myCards;
+        Shuffle(deck);
+
+        UpdateActionCardsInHand();
 
         ActionCardsUIScript ui = GameManager.instance.ActionCardUI.GetComponent<ActionCardsUIScript>();
         ui.UpdateActionCards(gameObject);
@@ -108,6 +128,7 @@ public class PlayerGameScript : NetworkBehaviour
     // TODO - DUJE - ovak mozes dodavat i makivat Holdove
     public void AddInitialResources()
     {
+        InitializeDeckClientRpc();
         Hold hold1 = holds[0];
         hold1.tokenType = GameManager.TokenType.Food;
         hold1.amount = 3;
@@ -180,13 +201,7 @@ public class PlayerGameScript : NetworkBehaviour
     {
         if (!IsOwner) return;
 
-        // TODO - DOMINIK
-
-        // draw a card
-        // draw 3 first round, 1 others
-        // draw to 4 if has MorgansMap
-        
-        // UpdateActionCardsInHand()
+        if(replace_action_card_number >= 0) UpdateActionCardsInHand();
 
         GameManager.instance.ActionCardUI.GetComponent<ActionCardsUIScript>().ChooseCardCalled();
     }
@@ -204,40 +219,84 @@ public class PlayerGameScript : NetworkBehaviour
         GameManager.instance.PlayerIsReadyServerRpc();
     }
 
-    [ClientRpc]
+    [Rpc(SendTo.Owner)]
     public void OpenDiceUIClientRpc(int day, int night)
     {
-        if (IsOwner)
-        {
-            bool isCaptain = player_index.Value == GameManager.instance.captain_player.Value;
-            GameManager.instance.DiceUI.GetComponent<DiceUIScript>().OpenDiceDialog(day, night, isCaptain);
-        }
+        Debug.Log("Is captain ? " + player_index.Value + " " + GameManager.instance.captain_player.Value);
+
+        bool isCaptain = player_index.Value == GameManager.instance.captain_player.Value;
+        GameManager.instance.DiceUI.GetComponent<DiceUIScript>().OpenDiceDialog(day, night, isCaptain);
     }
 
     public void UpdateActionCardsInHand()
     {
-        ActionCard drawnCard = deck[0];
-        deck.RemoveAt(0);
+        if (deck.Count == 0) ReshuffleDeck();
 
-        switch (replace_action_card_number)
+        if(action_card_1 == null)
         {
-            case 1:
-                action_card_1 = drawnCard;
-                break;
-            case 2:
-                action_card_2 = drawnCard;
-                break;
-            case 3:
-                action_card_3 = drawnCard;
-                break;
-            case 4:
-                action_card_4 = drawnCard;
-                break;
+            action_card_1 = deck[0];
+            action_card_2 = deck[1];
+            action_card_3 = deck[2];
+
+            usedCards.Add(deck[0]);
+            usedCards.Add(deck[1]);
+            usedCards.Add(deck[2]);
+
+            deck.RemoveAt(2);
+            deck.RemoveAt(1);
+            deck.RemoveAt(0);
+        }
+        else
+        {
+            ActionCard drawnCard = deck[0];
+            deck.RemoveAt(0);
+            usedCards.Add(drawnCard);
+
+            switch (replace_action_card_number)
+            {
+                case 1:
+                    action_card_1 = drawnCard;
+                    break;
+                case 2:
+                    action_card_2 = drawnCard;
+                    break;
+                case 3:
+                    action_card_3 = drawnCard;
+                    break;
+                case 4:
+                    action_card_4 = drawnCard;
+                    break;
+            }
         }
 
         ActionCardsUIScript ui = GameManager.instance.ActionCardUI.GetComponent<ActionCardsUIScript>();
         ui.UpdateActionCards(gameObject);
     }
+
+    public void ReshuffleDeck()
+    {
+        deck.AddRange(usedCards);
+
+        usedCards.Clear();
+
+        Shuffle(deck);
+    }
+
+
+    private void Shuffle(List<ActionCard> list)
+    {
+        System.Random rng = new System.Random();
+        int n = list.Count;
+        while (n > 1)
+        {
+            n--;
+            int k = rng.Next(n + 1);
+            ActionCard value = list[k];
+            list[k] = list[n];
+            list[n] = value;
+        }
+    }
+
 
     [Rpc(SendTo.Owner)]
     public void GetPlayedActionCardIDRpc()
@@ -250,8 +309,9 @@ public class PlayerGameScript : NetworkBehaviour
         else playedCard = action_card_4;
 
         Debug.Log("Getting card id: " + playedCard.cardID + ", on index " + replace_action_card_number);
-  
-        GameManager.instance.currentPlayedCard.Value = new GameManager.ActionCardData { cardID = playedCard.cardID };
+        GameManager.ActionCardData data = new GameManager.ActionCardData { cardID = playedCard.cardID };
+
+        GameManager.instance.SetPlayedActionCardServerRpc(data);
     }
 
 

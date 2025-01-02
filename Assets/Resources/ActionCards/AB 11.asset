@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a3a5cc1cb1a3f5843a7bb3431fdbe284, type: 3}
+  m_Name: AB 11
+  m_EditorClassIdentifier: 
+  cardID: AB-GFw
+  leftOption: 2
+  rightOption: 0
+  backgroundImage: {fileID: -1722051130, guid: e4c97d7ee2efc994d9eb97c4110c5c89, type: 3}
