@@ -48,7 +48,7 @@ TextureImporter:
   spriteMeshType: 1
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
-  spritePixelsToUnits: 200
+  spritePixelsToUnits: 100
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spriteGenerateFallbackPhysicsShape: 0
   alphaUsage: 1
@@ -100,19 +100,19 @@ TextureImporter:
       name: AnneBonny1_0
       rect:
         serializedVersion: 2
-        x: 0
-        y: 0
-        width: 1700
-        height: 2338
-      alignment: 0
+        x: 82
+        y: 1213
+        width: 469
+        height: 945
+      alignment: 9
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline:
-      - - {x: 0, y: -32}
-        - {x: 32, y: 0}
-        - {x: 0, y: 32}
-        - {x: -32, y: 0}
+      - - {x: 234.5, y: 472.5}
+        - {x: -234.25252, y: 472.5}
+        - {x: -234.25252, y: -472.5}
+        - {x: 234.5, y: -472.5}
       physicsShape:
       - - {x: 0, y: -32}
         - {x: 32, y: 0}
@@ -122,6 +122,120 @@ TextureImporter:
       bones: []
       spriteID: 08a1297c2a96444468bde263089c3444
       internalID: -689424756
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AnneBonny1_1
+      rect:
+        serializedVersion: 2
+        x: 585
+        y: 1212
+        width: 461
+        height: 946
+      alignment: 9
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline:
+      - - {x: 230.5, y: 473}
+        - {x: -230.5, y: 473}
+        - {x: -230.5, y: -473}
+        - {x: 230.5, y: -473}
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 9c77c481faf0ba54b82e6054bafb169e
+      internalID: 1125488686
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AnneBonny1_2
+      rect:
+        serializedVersion: 2
+        x: 1078
+        y: 1212
+        width: 458
+        height: 949
+      alignment: 9
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2f2ae88d3e5bc2a478d8e7580b237a0b
+      internalID: 1565827034
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AnneBonny1_3
+      rect:
+        serializedVersion: 2
+        x: 80
+        y: 209
+        width: 475
+        height: 948
+      alignment: 9
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c26e7eafcb8e64e49b0fcb6933dee947
+      internalID: 315411798
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AnneBonny1_4
+      rect:
+        serializedVersion: 2
+        x: 579
+        y: 225
+        width: 475
+        height: 950
+      alignment: 9
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 20d20b1a6aec8464c83fbbbe72486d68
+      internalID: 800846375
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AnneBonny1_5
+      rect:
+        serializedVersion: 2
+        x: 1065
+        y: 251
+        width: 487
+        height: 952
+      alignment: 9
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ff168c5e2137b814cab9f7c3b8445952
+      internalID: -1722051130
       vertices: []
       indices: 
       edges: []
@@ -141,6 +255,11 @@ TextureImporter:
       entries: []
     nameFileIdTable:
       AnneBonny1_0: -689424756
+      AnneBonny1_1: 1125488686
+      AnneBonny1_2: 1565827034
+      AnneBonny1_3: 315411798
+      AnneBonny1_4: 800846375
+      AnneBonny1_5: -1722051130
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
