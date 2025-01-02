@@ -90,6 +90,7 @@ public class GameManager : NetworkBehaviour
     
     public NetworkVariable<ActionCardData> currentPlayedCard = new NetworkVariable<ActionCardData>();
 
+
     public GameState state = GameState.Start;
 
     public override void OnNetworkSpawn()
@@ -170,7 +171,7 @@ public class GameManager : NetworkBehaviour
 
         // TODO - BOARD set special cards on pirate lairs (9 random card)
 
-        player_on_turn = captain_player;
+        player_on_turn.Value = captain_player.Value;
 
         // TODO - BOARD - ako hocete neku animaciju dodat al doubt
         // start some coroutine that calls:
@@ -187,6 +188,7 @@ public class GameManager : NetworkBehaviour
         //throw dice
         day_dice_value.Value = -1;
         night_dice_value.Value = -1;
+        await Task.Delay(100);
         ThrowDice();
 
         while (day_dice_value.Value < 0 && night_dice_value.Value < 0)
@@ -212,6 +214,7 @@ public class GameManager : NetworkBehaviour
             {
                 await Task.Delay(100);
             }
+            playerCalledTurnOver = false;
         }
 
         EndGameCycle();
@@ -221,7 +224,7 @@ public class GameManager : NetworkBehaviour
     {
         captain_player.Value = (captain_player.Value + 1) % players.Count;
 
-        player_on_turn = captain_player;
+        player_on_turn.Value = captain_player.Value;
 
         if (playerReachedEndSquare)
         {
@@ -250,7 +253,7 @@ public class GameManager : NetworkBehaviour
 
     void EndPlayerTurn()
     {
-        // TODO : nothing for now, maybe usefull somehow
+        playerCalledTurnOver = true;
     }
 
     #region Dice
@@ -268,6 +271,12 @@ public class GameManager : NetworkBehaviour
     }
 
     public void OnDayNightDiceOrderChosen(int day, int night)
+    {
+        SetDayNightDiceServerRpc(day, night);
+    }
+
+    [Rpc(SendTo.Server)]
+    public void SetDayNightDiceServerRpc(int day, int night)
     {
         day_dice_value.Value = day;
         night_dice_value.Value = night;
@@ -586,6 +595,14 @@ public class GameManager : NetworkBehaviour
         }
     }
 
+    [Rpc(SendTo.Server)]
+    public void SetPlayedActionCardServerRpc(ActionCardData playedCardData)
+    {
+        ActionCard playedCard = actionCardLookup[playedCardData.cardID];
+
+        currentPlayedCard.Value = playedCardData;
+    }
+
     [ServerRpc]
     public void PlayerAction1EndedServerRPC()
     {
@@ -623,7 +640,8 @@ public class GameManager : NetworkBehaviour
         else
         {
             // hand player their resources
-            LoadResourceToPlayerHold(cardOption);
+            Debug.Log("Adding resources to player");
+            LoadResourceToPlayerHold(cardOption, useDayOption);
         }
     }
     #endregion
@@ -663,9 +681,13 @@ public class GameManager : NetworkBehaviour
         }
     }
 
-    void LoadResourceToPlayerHold(ActionCardOption cardOption)
+    void LoadResourceToPlayerHold(ActionCardOption cardOption, bool dayAction = true)
     {
         // TODO - DUJE make a player choose a hold to put resource into
+
+
+        if (dayAction) PlayerAction1EndedServerRPC();
+        else PlayerAction2EndedServerRPC();
     }
 
     async void TryTaxPlayer(bool dayAction)

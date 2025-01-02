@@ -23,7 +23,7 @@ public class DiceUIScript : MonoBehaviour
 
     public void OpenDiceDialog(int day, int night, bool isCaptain)
     {
-        Debug.Log("Opening dice window");
+        Debug.Log("Opening dice window" + (isCaptain ? ", im captain" : ""));
         holder_panel.SetActive(true);
         day_dice_value = day;
         night_dice_value = night;
@@ -61,6 +61,10 @@ public class DiceUIScript : MonoBehaviour
     public void CloseDiceDialog()
     {
         Debug.Log("Close the dialog");
+
+        confirm_button.gameObject.SetActive(false);
+        switch_button.gameObject.SetActive(false);
+
         holder_panel.SetActive(false);
     }
 }

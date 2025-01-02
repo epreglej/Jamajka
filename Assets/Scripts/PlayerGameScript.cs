@@ -96,7 +96,6 @@ public class PlayerGameScript : NetworkBehaviour
 
     }
 
-    // TODO : DOMINIK
     [Rpc(SendTo.Owner)]
     public void InitializeDeckClientRpc()
     {
@@ -118,6 +117,7 @@ public class PlayerGameScript : NetworkBehaviour
         }
 
         deck = myCards;
+        Shuffle(deck);
 
         UpdateActionCardsInHand();
 
@@ -219,18 +219,19 @@ public class PlayerGameScript : NetworkBehaviour
         GameManager.instance.PlayerIsReadyServerRpc();
     }
 
-    [ClientRpc]
+    [Rpc(SendTo.Owner)]
     public void OpenDiceUIClientRpc(int day, int night)
     {
-        if (IsOwner)
-        {
-            bool isCaptain = player_index.Value == GameManager.instance.captain_player.Value;
-            GameManager.instance.DiceUI.GetComponent<DiceUIScript>().OpenDiceDialog(day, night, isCaptain);
-        }
+        Debug.Log("Is captain ? " + player_index.Value + " " + GameManager.instance.captain_player.Value);
+
+        bool isCaptain = player_index.Value == GameManager.instance.captain_player.Value;
+        GameManager.instance.DiceUI.GetComponent<DiceUIScript>().OpenDiceDialog(day, night, isCaptain);
     }
 
     public void UpdateActionCardsInHand()
     {
+        if (deck.Count == 0) ReshuffleDeck();
+
         if(action_card_1 == null)
         {
             action_card_1 = deck[0];
@@ -272,6 +273,31 @@ public class PlayerGameScript : NetworkBehaviour
         ui.UpdateActionCards(gameObject);
     }
 
+    public void ReshuffleDeck()
+    {
+        deck.AddRange(usedCards);
+
+        usedCards.Clear();
+
+        Shuffle(deck);
+    }
+
+
+    private void Shuffle(List<ActionCard> list)
+    {
+        System.Random rng = new System.Random();
+        int n = list.Count;
+        while (n > 1)
+        {
+            n--;
+            int k = rng.Next(n + 1);
+            ActionCard value = list[k];
+            list[k] = list[n];
+            list[n] = value;
+        }
+    }
+
+
     [Rpc(SendTo.Owner)]
     public void GetPlayedActionCardIDRpc()
     {
@@ -283,8 +309,9 @@ public class PlayerGameScript : NetworkBehaviour
         else playedCard = action_card_4;
 
         Debug.Log("Getting card id: " + playedCard.cardID + ", on index " + replace_action_card_number);
-  
-        GameManager.instance.currentPlayedCard.Value = new GameManager.ActionCardData { cardID = playedCard.cardID };
+        GameManager.ActionCardData data = new GameManager.ActionCardData { cardID = playedCard.cardID };
+
+        GameManager.instance.SetPlayedActionCardServerRpc(data);
     }
 
 
