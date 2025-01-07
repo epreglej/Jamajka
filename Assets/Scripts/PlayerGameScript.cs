@@ -37,6 +37,7 @@ public class PlayerGameScript : NetworkBehaviour
     public bool hasLadyBeth = false; // +2 in combat
     public bool has6thHold = false; // 6. hold spot, we ignore this for now
 
+    [System.Serializable]
     public struct Hold
     {
         public GameManager.TokenType tokenType;
@@ -129,13 +130,15 @@ public class PlayerGameScript : NetworkBehaviour
     public void AddInitialResources()
     {
         InitializeDeckClientRpc();
-        Hold hold1 = holds[0];
+        Hold hold1 = holds[0]; 
         hold1.tokenType = GameManager.TokenType.Food;
         hold1.amount = 3;
+        holds[0] = hold1; // structs are value type funny
 
         Hold hold2 = holds[1];
         hold2.tokenType = GameManager.TokenType.Gold;
         hold2.amount = 3;
+        holds[1] = hold2;
     }
 
     // TODO - DUJE - ovo pozivas da bi dodal resurse u hold ( ako ima free space sam doda - treba prikazat, ako nema free space treba zamijenit )
@@ -159,6 +162,7 @@ public class PlayerGameScript : NetworkBehaviour
             Hold h = holds[index_of_freeHold];
             h.tokenType = token;
             h.amount = amount;
+            holds[index_of_freeHold] = h;
         }
         else
         {
@@ -191,6 +195,7 @@ public class PlayerGameScript : NetworkBehaviour
         Hold h = holds[replaceHold_index];
         h.tokenType = replaceHold_token;
         h.amount = replaceHold_amount;
+        holds[replaceHold_index] = h;
 
         replaceHold_index = -1;
     }
