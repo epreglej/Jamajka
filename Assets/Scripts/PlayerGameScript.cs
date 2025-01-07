@@ -139,6 +139,21 @@ public class PlayerGameScript : NetworkBehaviour
         hold2.tokenType = GameManager.TokenType.Gold;
         hold2.amount = 3;
         holds[1] = hold2;
+
+        InitialHoldsBandaidFixRpc(); // NOTE - DUJE: bandaid fix za sync hold za client, bez diranja drugog koda
+    }
+
+    [Rpc(SendTo.NotServer)]
+    private void InitialHoldsBandaidFixRpc() {
+        Hold hold1 = holds[0]; 
+        hold1.tokenType = GameManager.TokenType.Food;
+        hold1.amount = 3;
+        holds[0] = hold1;
+
+        Hold hold2 = holds[1];
+        hold2.tokenType = GameManager.TokenType.Gold;
+        hold2.amount = 3;
+        holds[1] = hold2;
     }
 
     // TODO - DUJE - ovo pozivas da bi dodal resurse u hold ( ako ima free space sam doda - treba prikazat, ako nema free space treba zamijenit )
