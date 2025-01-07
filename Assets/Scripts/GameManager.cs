@@ -542,6 +542,10 @@ public class GameManager : NetworkBehaviour
              *  3) give looser a cursed own action card -- ignore  
              */
 
+            // TODO - DUJE: implement choice, default is stealing for now
+            // also verify if this runs exclusively on server
+            players[winner].OpenVictoryChoiceClientRPC(winner, loser);
+
 
         }
 

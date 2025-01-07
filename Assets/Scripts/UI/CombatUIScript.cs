@@ -3,6 +3,7 @@ using UnityEngine.UI;
 using Unity.Netcode;
 using TMPro;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 
 public class CombatUIScript : NetworkBehaviour
 {
@@ -24,6 +25,8 @@ public class CombatUIScript : NetworkBehaviour
     [SerializeField] GameObject AttackerWinnerPanel;
     [SerializeField] GameObject DefenderWinnerPanel;
     [SerializeField] GameObject TiePanel;
+    [SerializeField] private GameObject ChooseHoldPanel;
+    [SerializeField] private List<RectTransform> holdPanels = new List<RectTransform>();
 
     bool attackerTurn = true;
     bool isAttacker = false;
@@ -38,6 +41,7 @@ public class CombatUIScript : NetworkBehaviour
     {
         CombatPanel.gameObject.SetActive(false);
         OpponentChoicePanel.gameObject.SetActive(false);
+        ChooseHoldPanel.SetActive(false);
 
         AttackerPanel.Find("CannonNumber").GetComponent<TextMeshProUGUI>().SetText("0 Cannon tokens");
         AttackerPanel.Find("LadyBeth").gameObject.SetActive(false);
@@ -313,6 +317,35 @@ public class CombatUIScript : NetworkBehaviour
         TiePanel.SetActive(false);
         AttackerWinnerPanel.SetActive(false);
         DefenderWinnerPanel.SetActive(false);
+    }
+
+    public void DisplayVictoryChoice(int winner, int loser) {
+        // TODO - DUJE: implement victory choice UI
+        // for now, just default to steal from loser holds
+
+        //Debug.Log("and hello from winner combat UI");
+        DisplayChooseHoldPanel(winner, loser);
+    }
+
+    private void DisplayChooseHoldPanel(int winner, int loser) {
+        PlayerGameScript loserPlayer = GameManager.instance.players[loser];
+        //Debug.Log("LoserPlayer index: " + loserPlayer.player_index.Value + ", parameter: " + loser);
+        List<PlayerGameScript.Hold> holds = loserPlayer.holds;
+
+        // TODO - DUJE: fix hold contents not displaying on clients (holds are empty on clients)
+        for (int i = 0; i < 5; i++) {
+            TextMeshProUGUI holdText = holdPanels[i].Find("HoldContentsText").GetComponent<TextMeshProUGUI>();
+            PlayerGameScript.Hold hold = holds[i];
+            holdText.text = hold.amount.ToString() + " " + hold.tokenType.ToString();
+        }
+
+
+        ChooseHoldPanel.SetActive(true);
+    }
+
+    public void ChooseHoldOnClick(int index) {
+        ChooseHoldPanel.SetActive(false);
+        Debug.Log("Selected hold index: " + index);
     }
 
 }

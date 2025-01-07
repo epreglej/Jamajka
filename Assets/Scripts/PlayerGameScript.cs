@@ -337,4 +337,15 @@ public class PlayerGameScript : NetworkBehaviour
     {
         GameManager.instance.CombatUI.GetComponent<CombatUIScript>().OpenOpponentChoice(players);
     }
+
+    [Rpc(SendTo.Owner)]
+    public void OpenVictoryChoiceClientRPC(int winner, int loser) {
+        //if (!IsOwner) return;
+        if (player_index.Value != winner) {
+            Debug.Log("OpenVictoryChoiceClientRPC (PlayerGameScript): not winner");
+             return;
+        }
+        //Debug.Log("hello from winner playergamescript");
+        GameManager.instance.CombatUI.GetComponent<CombatUIScript>().DisplayVictoryChoice(winner, loser);
+    }
 }
