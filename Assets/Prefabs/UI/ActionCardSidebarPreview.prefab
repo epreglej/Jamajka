@@ -242,8 +242,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   leftIcon: {fileID: 3166561317551607515}
   rightIcon: {fileID: 4513416243098701384}
-  moveForwardSprite: {fileID: 1917510379, guid: 774e1bd52b1d11247978686ae2197d85, type: 3}
-  moveBackwardSprite: {fileID: -1021311019, guid: 774e1bd52b1d11247978686ae2197d85, type: 3}
+  moveForwardSprite: {fileID: 1816872612, guid: c47f63d0c57baa241bfcce3a0bad0827, type: 3}
+  moveBackwardSprite: {fileID: 1831073855, guid: c47f63d0c57baa241bfcce3a0bad0827, type: 3}
   foodSprite: {fileID: -1645824714, guid: 774e1bd52b1d11247978686ae2197d85, type: 3}
   goldSprite: {fileID: 266895400, guid: 774e1bd52b1d11247978686ae2197d85, type: 3}
   cannonSprite: {fileID: -79173711, guid: 774e1bd52b1d11247978686ae2197d85, type: 3}

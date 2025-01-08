@@ -43,11 +43,13 @@ public class CombatUIScript : NetworkBehaviour
         AttackerPanel.Find("LadyBeth").gameObject.SetActive(false);
         AttackerPanel.Find("Dice Result").GetComponent<TextMeshProUGUI>().SetText("Rolled dice: ");
         AttackerPanel.Find("TotalPoints").GetComponent<TextMeshProUGUI>().SetText("= 0 Attack points");
+        AttackerPanel.Find("PlayerName").GetComponent<TextMeshProUGUI>().SetText("");
 
         DefenderPanel.Find("CannonNumber").GetComponent<TextMeshProUGUI>().SetText("0 Cannon tokens");
         DefenderPanel.Find("LadyBeth").gameObject.SetActive(false);
         DefenderPanel.Find("Dice Result").GetComponent<TextMeshProUGUI>().SetText("Rolled dice: ");
         DefenderPanel.Find("TotalPoints").GetComponent<TextMeshProUGUI>().SetText("= 0 Attack points");
+        DefenderPanel.Find("PlayerName").GetComponent<TextMeshProUGUI>().SetText("");
 
         TiePanel.SetActive(false);
         AttackerWinnerPanel.SetActive(false);
@@ -220,7 +222,14 @@ public class CombatUIScript : NetworkBehaviour
             Debug.Log("I am defender");
         }
 
-        // TODO : setup attacker and defender name and image
+        AttackerPanel.Find("PlayerName").GetComponent<TextMeshProUGUI>().SetText(GameManager.instance.players[a].username);
+        DefenderPanel.Find("PlayerName").GetComponent<TextMeshProUGUI>().SetText(GameManager.instance.players[a].username);
+
+        string[] pirates = { "AB", "ED", "JR", "MR", "OL", "SB" };
+
+        AttackerPanel.Find("Image").GetComponent<Image>().sprite = Resources.Load<Sprite>("Sprites/PiratePicture/" + pirates[a]);
+        DefenderPanel.Find("Image").GetComponent<Image>().sprite = Resources.Load<Sprite>("Sprites/PiratePicture/" + pirates[d]);
+
         CombatPanel.gameObject.SetActive(true);
     }
 
@@ -304,11 +313,13 @@ public class CombatUIScript : NetworkBehaviour
         AttackerPanel.Find("LadyBeth").gameObject.SetActive(false);
         AttackerPanel.Find("Dice Result").GetComponent<TextMeshProUGUI>().SetText("Rolled dice: ");
         AttackerPanel.Find("TotalPoints").GetComponent<TextMeshProUGUI>().SetText("= 0 Attack points");
+        AttackerPanel.Find("PlayerName").GetComponent<TextMeshProUGUI>().SetText("");
 
         DefenderPanel.Find("CannonNumber").GetComponent<TextMeshProUGUI>().SetText("0 Cannon tokens");
         DefenderPanel.Find("LadyBeth").gameObject.SetActive(false);
         DefenderPanel.Find("Dice Result").GetComponent<TextMeshProUGUI>().SetText("Rolled dice: ");
         DefenderPanel.Find("TotalPoints").GetComponent<TextMeshProUGUI>().SetText("= 0 Attack points");
+        DefenderPanel.Find("PlayerName").GetComponent<TextMeshProUGUI>().SetText("");
 
         TiePanel.SetActive(false);
         AttackerWinnerPanel.SetActive(false);
