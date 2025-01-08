@@ -223,7 +223,7 @@ public class CombatUIScript : NetworkBehaviour
         }
 
         AttackerPanel.Find("PlayerName").GetComponent<TextMeshProUGUI>().SetText(GameManager.instance.players[a].username);
-        DefenderPanel.Find("PlayerName").GetComponent<TextMeshProUGUI>().SetText(GameManager.instance.players[a].username);
+        DefenderPanel.Find("PlayerName").GetComponent<TextMeshProUGUI>().SetText(GameManager.instance.players[d].username);
 
         string[] pirates = { "AB", "ED", "JR", "MR", "OL", "SB" };
 
@@ -324,6 +324,9 @@ public class CombatUIScript : NetworkBehaviour
         TiePanel.SetActive(false);
         AttackerWinnerPanel.SetActive(false);
         DefenderWinnerPanel.SetActive(false);
+
+        isDefender = false;
+        isAttacker = false;
     }
 
 }
