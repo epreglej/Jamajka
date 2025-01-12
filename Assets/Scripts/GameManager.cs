@@ -795,5 +795,13 @@ public class GameManager : NetworkBehaviour
     }
     #endregion
 
+    #region Unsorted
 
+    [Rpc(SendTo.Server)]
+    public void UpdatePlayerHoldsServerRpc(int player_index, TokenType type, int amount, int holdIndex)
+    {
+        players[player_index].UpdatePlayerHoldsClientRpc(type, amount, holdIndex);
+    }
+
+    #endregion
 }

@@ -363,4 +363,13 @@ public class PlayerGameScript : NetworkBehaviour
         //Debug.Log("hello from winner playergamescript");
         GameManager.instance.CombatUI.GetComponent<CombatUIScript>().DisplayVictoryChoice(winner, loser);
     }
+
+    [Rpc(SendTo.Everyone)]
+    public void UpdatePlayerHoldsClientRpc(GameManager.TokenType type, int amount, int holdIndex)
+    {
+        Hold h = holds[holdIndex];
+        h.tokenType = type;
+        h.amount = amount;
+        holds[holdIndex] = h;
+    }
 }

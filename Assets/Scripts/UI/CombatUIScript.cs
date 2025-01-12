@@ -25,8 +25,13 @@ public class CombatUIScript : NetworkBehaviour
     [SerializeField] GameObject AttackerWinnerPanel;
     [SerializeField] GameObject DefenderWinnerPanel;
     [SerializeField] GameObject TiePanel;
+
     [SerializeField] private GameObject ChooseHoldPanel;
     [SerializeField] private List<RectTransform> holdPanels = new List<RectTransform>();
+    [SerializeField] private TextMeshProUGUI chooseHoldText;
+    private PlayerGameScript winnerPlayer = null;
+    private PlayerGameScript loserPlayer = null;
+    private int chosenHoldIndex = -1;
 
     bool attackerTurn = true;
     bool isAttacker = false;
@@ -323,29 +328,62 @@ public class CombatUIScript : NetworkBehaviour
         // TODO - DUJE: implement victory choice UI
         // for now, just default to steal from loser holds
 
-        //Debug.Log("and hello from winner combat UI");
         DisplayChooseHoldPanel(winner, loser);
     }
 
     private void DisplayChooseHoldPanel(int winner, int loser) {
-        PlayerGameScript loserPlayer = GameManager.instance.players[loser];
+        loserPlayer = GameManager.instance.players[loser];
+        winnerPlayer = GameManager.instance.players[winner];
         //Debug.Log("LoserPlayer index: " + loserPlayer.player_index.Value + ", parameter: " + loser);
         List<PlayerGameScript.Hold> holds = loserPlayer.holds;
 
-        // TODO - DUJE: fix hold contents not displaying on clients (holds are empty on clients)
         for (int i = 0; i < 5; i++) {
             TextMeshProUGUI holdText = holdPanels[i].Find("HoldContentsText").GetComponent<TextMeshProUGUI>();
             PlayerGameScript.Hold hold = holds[i];
             holdText.text = hold.amount.ToString() + " " + hold.tokenType.ToString();
         }
 
-
         ChooseHoldPanel.SetActive(true);
     }
 
-    public void ChooseHoldOnClick(int index) {
-        ChooseHoldPanel.SetActive(false);
-        Debug.Log("Selected hold index: " + index);
+    public void ChooseHoldOnClick(int chosenHoldIndex) {
+        if (this.chosenHoldIndex == -1) {
+            this.chosenHoldIndex = chosenHoldIndex;
+            chooseHoldText.text = "Place resources from hold " + chosenHoldIndex+1 + " into one of your holds";
+            DisplayOwnHolds();
+        } else {
+            // swap resources
+            PlayerGameScript.Hold winnerHold = winnerPlayer.holds[chosenHoldIndex];
+            PlayerGameScript.Hold loserHold = loserPlayer.holds[this.chosenHoldIndex];
+
+            // TODO - DUJE: add logic for checking if the swap is valid (same resource type etc.)
+            winnerHold.amount = loserHold.amount;
+            winnerHold.tokenType = loserHold.tokenType;
+            loserHold.amount = 0;
+            loserHold.tokenType = GameManager.TokenType.None;
+
+            winnerPlayer.holds[chosenHoldIndex] = winnerHold;
+            loserPlayer.holds[this.chosenHoldIndex] = loserHold;
+
+            GameManager.instance.UpdatePlayerHoldsServerRpc(winnerPlayer.player_index.Value, winnerHold.tokenType, winnerHold.amount, chosenHoldIndex);
+            GameManager.instance.UpdatePlayerHoldsServerRpc(loserPlayer.player_index.Value, loserHold.tokenType, loserHold.amount, this.chosenHoldIndex);
+
+            // reset state
+            ChooseHoldPanel.SetActive(false);
+            chooseHoldText.text = "Choose a Hold to Steal from";
+            this.chosenHoldIndex = -1;
+            winnerPlayer = null;
+            loserPlayer = null;
+        }
     }
 
+    private void DisplayOwnHolds() {
+        List<PlayerGameScript.Hold> holds = winnerPlayer.holds;
+
+        for (int i = 0; i < 5; i++) {
+            TextMeshProUGUI holdText = holdPanels[i].Find("HoldContentsText").GetComponent<TextMeshProUGUI>();
+            PlayerGameScript.Hold hold = holds[i];
+            holdText.text = hold.amount.ToString() + " " + hold.tokenType.ToString();
+        }
+    }
 }
