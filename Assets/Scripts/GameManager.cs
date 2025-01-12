@@ -48,6 +48,9 @@ public class GameManager : NetworkBehaviour
     // Za rollanje Combat kocke - samo random index na listu
     public static List<int> COMBAT_DICE_VALUES = new List<int>{2, 4, 6, 8, STAR_COMBAT_VALUE};
 
+    // Čekanje pobjednikovog odabira
+    private bool winnerHasChosen = false;
+
     public enum TreasureCard
     {
         Treasure, MorgansMap, SaransSaber, LadyBeth, AdditionHoldSpace
@@ -530,6 +533,7 @@ public class GameManager : NetworkBehaviour
         {
             // its a tie
             CombatUI.GetComponent<CombatUIScript>().DisplayWinnerClientRpc(0);
+
         }
         else
         {
@@ -546,12 +550,18 @@ public class GameManager : NetworkBehaviour
             // also verify if this runs exclusively on server
             players[winner].OpenVictoryChoiceClientRPC(winner, loser);
 
+            await WaitForWinnerChoice();
 
         }
-
         await Task.Delay(5000);
-
         playerBattleActive = false;
+    }
+
+    async private Task WaitForWinnerChoice() {
+        while (!winnerHasChosen) {
+            await Task.Delay(100);
+        }
+        winnerHasChosen = !winnerHasChosen;
     }
 
 
@@ -801,6 +811,12 @@ public class GameManager : NetworkBehaviour
     public void UpdatePlayerHoldsServerRpc(int player_index, TokenType type, int amount, int holdIndex)
     {
         players[player_index].UpdatePlayerHoldsClientRpc(type, amount, holdIndex);
+    }
+
+    [Rpc(SendTo.Server)]
+    public void OnWinnerChoiceCompleteRpc()
+    {
+        winnerHasChosen = true;
     }
 
     #endregion

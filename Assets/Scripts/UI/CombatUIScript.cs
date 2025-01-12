@@ -374,6 +374,7 @@ public class CombatUIScript : NetworkBehaviour
             this.chosenHoldIndex = -1;
             winnerPlayer = null;
             loserPlayer = null;
+            GameManager.instance.OnWinnerChoiceCompleteRpc();
         }
     }
 
