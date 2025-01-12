@@ -349,7 +349,7 @@ public class CombatUIScript : NetworkBehaviour
     public void ChooseHoldOnClick(int chosenHoldIndex) {
         if (this.chosenHoldIndex == -1) {
             this.chosenHoldIndex = chosenHoldIndex;
-            chooseHoldText.text = "Place resources from hold " + chosenHoldIndex+1 + " into one of your holds";
+            chooseHoldText.text = "Place resources from hold " + (chosenHoldIndex + 1) + " into one of your holds";
             DisplayOwnHolds();
         } else {
             // swap resources
