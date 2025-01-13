@@ -10,6 +10,7 @@ public class SquareManager : MonoBehaviour
     {
         // Find all Squares that are child to current GameObject (Square Manager)
         squares.AddRange(gameObject.GetComponentsInChildren<Square>());
+        squares.Sort((x, y) => x.id.CompareTo(y.id));
     }
 
     public Dictionary<GameObject, Square> GetSquaresOfAllPlayerGameObjects()
