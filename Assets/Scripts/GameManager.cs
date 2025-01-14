@@ -819,5 +819,12 @@ public class GameManager : NetworkBehaviour
         winnerHasChosen = true;
     }
 
+    [Rpc(SendTo.Server)]
+    public void StealTreasureCardServerRpc(int winner_index, int loser_index, int cardIndex)
+    {
+        players[winner_index].UpdateTreasureCardRpc(cardIndex, true);
+        players[loser_index].UpdateTreasureCardRpc(cardIndex, false);
+    }
+
     #endregion
 }

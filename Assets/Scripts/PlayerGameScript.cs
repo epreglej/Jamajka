@@ -372,4 +372,53 @@ public class PlayerGameScript : NetworkBehaviour
         h.amount = amount;
         holds[holdIndex] = h;
     }
+
+    // NOTE - DUJE: ovo ne treba biti rpc ako se syncaju treasure cardovi, neznam zasto sam ovo radia
+    // , al je nacin eventualno za dobit skrivene treasure cardove koji ne bi bili syncani
+    [Rpc(SendTo.Owner)]
+    public void StealTreasureCardsRpc(int stealerIndex)
+    {
+        bool[] treasureCards = new bool[4];
+        treasureCards[0] = hasMorgansMap;
+        treasureCards[1] = hasSaransSaber;
+        treasureCards[2] = hasLadyBeth;
+        treasureCards[3] = has6thHold;
+
+        Debug.Log("Should be loser, getting stolen from");
+
+        GameManager.instance.players[stealerIndex].HandleStealTreasureCardsRpc(treasureCards);
+    }
+
+    [Rpc(SendTo.Owner)]
+    public void HandleStealTreasureCardsRpc(bool[] treasureCards)
+    {
+        Debug.Log("Should be on winner, stealing treasure cards");
+
+        string debugCards = "Available treasure cards: ";
+        for (int i = 0; i < treasureCards.Length; i++) {
+            debugCards += treasureCards[i] + " ";
+        }
+        Debug.Log(debugCards);
+
+        GameManager.instance.CombatUI.GetComponent<CombatUIScript>().DisplayStealTreasureCardPanel(treasureCards);
+        
+    }
+
+    [Rpc(SendTo.Everyone)]
+    public void UpdateTreasureCardRpc(int cardIndex, bool hasCard) {
+        switch (cardIndex) {
+            case 1:
+                hasMorgansMap = hasCard;
+                break;
+            case 2:
+                hasSaransSaber = hasCard;
+                break;
+            case 3:
+                hasLadyBeth = hasCard;
+                break;
+            case 4:
+                has6thHold = hasCard;
+                break;
+        }
+    }
 }
