@@ -10,8 +10,9 @@ public enum SquareType
 public class Square : MonoBehaviour
 {
     // ID must be interpreted as a sequential number of the square for easier player movement configuration
-    public int id = 0;
+    public int id;
     public SquareType type;
+    public int resourceValue;
     public List<GameObject> playerGameObjectsOnSquare;
 
     // ili na onnetworkspawn staviti
@@ -58,6 +59,11 @@ public class Square : MonoBehaviour
     public List<GameObject> GetPlayerGameObjectsOnSquare()
     {
         return playerGameObjectsOnSquare;
+    }
+
+    public int GetResourceValue()
+    {
+        return resourceValue;
     }
 }
 
