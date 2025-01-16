@@ -10,6 +10,7 @@ public class PlayerGameScript : NetworkBehaviour
     // public NetworkVariable<FixedString32Bytes> username = new NetworkVariable<FixedString32Bytes>();
     // public string username = string.Empty;
     public NetworkVariable<int> player_index = new NetworkVariable<int>(-1);
+    public NetworkVariable<int> currentSquareID = new NetworkVariable<int>(0);
 
     // card options
     GameManager.ActionCardOption cardOption1 = GameManager.ActionCardOption.None;
@@ -48,8 +49,6 @@ public class PlayerGameScript : NetworkBehaviour
     {
         base.OnNetworkSpawn();
 
-        
-
         for (int i = 0; i < 5; i++)
         {
             Hold h = new();
@@ -70,6 +69,8 @@ public class PlayerGameScript : NetworkBehaviour
 
             //string username = "Player" + Random.Range(1, 1000);
             GameManager.instance.AddPlayerUsernameServerRpc("Player" + Random.Range(1, 1000));
+
+            SquareManager.instance.squares[0].AddPlayerIndexToSquareClientRpc(player_index.Value);
         }
     }
     

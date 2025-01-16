@@ -1,12 +1,30 @@
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
+using Unity.Netcode;
 using UnityEngine;
 
-public class SquareManager : MonoBehaviour
+public class SquareManager : NetworkBehaviour
 {
+    public static SquareManager instance { get; private set; }
+
     public List<Square> squares = new List<Square>();
 
     private int firstSquareID;
     private int lastSquareID;
+
+
+    public override void OnNetworkSpawn()
+    {
+        base.OnNetworkSpawn();
+        if (instance != null && instance != this)
+        {
+            Destroy(this);
+        }
+        else
+        {
+            instance = this;
+        };
+    }
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -16,7 +34,7 @@ public class SquareManager : MonoBehaviour
         squares.Sort((x, y) => x.id.CompareTo(y.id));
 
         firstSquareID = squares[0].id;
-        lastSquareID = squares[-1].id;
+        lastSquareID = squares[squares.Count - 1].id;
     }
 
     public List<int> GetPlayerIndicesFromSquareWithId(int id)
@@ -28,9 +46,6 @@ public class SquareManager : MonoBehaviour
                 return square.playerIndicesOnSquare;
             }
         }
-
         return null;
     }
-
-
 }
