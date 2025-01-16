@@ -5,23 +5,32 @@ public class SquareManager : MonoBehaviour
 {
     public List<Square> squares = new List<Square>();
 
+    private int firstSquareID;
+    private int lastSquareID;
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
         // Find all Squares that are child to current GameObject (Square Manager)
         squares.AddRange(gameObject.GetComponentsInChildren<Square>());
         squares.Sort((x, y) => x.id.CompareTo(y.id));
+
+        firstSquareID = squares[0].id;
+        lastSquareID = squares[-1].id;
     }
 
-    public Dictionary<GameObject, Square> GetSquaresOfAllPlayerGameObjects()
+    public List<int> GetPlayerIndicesFromSquareWithId(int id)
     {
-        Dictionary<GameObject, Square> squaresOfAllPlayerGameObjects = new Dictionary<GameObject, Square>();
-
-        foreach (var player in GameManager.instance.players)
+        foreach (var square in squares)
         {
-            squaresOfAllPlayerGameObjects.Add(player.gameObject, player.gameObject.GetComponent<Square>());
+            if(square.id == id)
+            {
+                return square.playerIndicesOnSquare;
+            }
         }
 
-        return squaresOfAllPlayerGameObjects;
+        return null;
     }
+
+
 }

@@ -1,19 +1,17 @@
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
+using Unity.Netcode;
 
-public enum SquareType
-{
-    PirateLair, Sea, Port
-}
-
-public class Square : MonoBehaviour
+public class Square : NetworkBehaviour
 {
     // ID must be interpreted as a sequential number of the square for easier player movement configuration
     public int id;
-    public SquareType type;
     public int resourceValue;
-    public List<GameObject> playerGameObjectsOnSquare;
+    public GameManager.SquareType type;
+    // public TreasureCard tc 
+
+    public List<int> playerIndicesOnSquare;
 
     // ili na onnetworkspawn staviti
     private void Start()
@@ -45,20 +43,22 @@ public class Square : MonoBehaviour
             Debug.LogWarning("No Canvas child found for this Square.");
         }
     }
-
-    public void AddPlayerGameObjectToSquare(GameObject playerGameObject)
+    
+    [ClientRpc]
+    public void AddPlayerIndexToSquareClientRpc(int index)
     {
-        playerGameObjectsOnSquare.Add(playerGameObject);
+        playerIndicesOnSquare.Add(index);
     }
 
-    public void RemovePlayerGameObjectFromSquare(GameObject playerGameObject)
+    [ClientRpc]
+    public void RemovePlayerIndexFromSquareClientRpc(int index)
     {
-        playerGameObjectsOnSquare.Remove(playerGameObject);
+        playerIndicesOnSquare.Remove(index);
     }
 
-    public List<GameObject> GetPlayerGameObjectsOnSquare()
+    public List<int> GetPlayerIndexesOnSquare()
     {
-        return playerGameObjectsOnSquare;
+        return playerIndicesOnSquare;
     }
 
     public int GetResourceValue()

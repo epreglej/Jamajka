@@ -3,6 +3,7 @@ using UnityEngine.UI;
 using Unity.Netcode;
 using TMPro;
 using System.Threading.Tasks;
+using System.Linq;
 
 public class CombatUIScript : NetworkBehaviour
 {
@@ -70,15 +71,28 @@ public class CombatUIScript : NetworkBehaviour
         
         foreach (int player in players)
         {
+            Debug.LogWarning(player);
             string child_name = "Opponent Choice " + i;
 
             Button choice_button = container.Find(child_name).GetComponent<Button>();
 
+            /*
             foreach (var e in GameManager.instance.players) 
             {
+                Debug.Log(e.player_index.Value + " " + e.username.Value.ToString());
                 if(e.player_index.Value == player)
                 {
-                    choice_button.GetComponentInChildren<TMP_Text>().text = e.username;
+                    choice_button.GetComponentInChildren<TMP_Text>().text = e.username.Value.ToString();
+                }
+            }
+            */
+
+            // Novo rjesenje vuce usernameove iz GameManager.instance.usernames (imaju isti index ko player indexi)
+            for(int j = 0; j < players.Count() + 1; j++)
+            {
+                if (GameManager.instance.players[j].player_index.Value == player)
+                {
+                    choice_button.GetComponentInChildren<TMP_Text>().text = GameManager.instance.usernames[j].Value.ToString();
                 }
             }
 
@@ -222,8 +236,11 @@ public class CombatUIScript : NetworkBehaviour
             Debug.Log("I am defender");
         }
 
-        AttackerPanel.Find("PlayerName").GetComponent<TextMeshProUGUI>().SetText(GameManager.instance.players[a].username);
-        DefenderPanel.Find("PlayerName").GetComponent<TextMeshProUGUI>().SetText(GameManager.instance.players[d].username);
+        foreach (var player in GameManager.instance.usernames) { Debug.Log(player.Value.ToString()); }
+        AttackerPanel.Find("PlayerName").GetComponent<TextMeshProUGUI>().SetText(GameManager.instance.usernames[a].Value.ToString());
+        DefenderPanel.Find("PlayerName").GetComponent<TextMeshProUGUI>().SetText(GameManager.instance.usernames[d].Value.ToString());
+        //AttackerPanel.Find("PlayerName").GetComponent<TextMeshProUGUI>().SetText(GameManager.instance.players[a].username.Value.ToString());
+        //DefenderPanel.Find("PlayerName").GetComponent<TextMeshProUGUI>().SetText(GameManager.instance.players[d].username.Value.ToString());
 
         string[] pirates = { "AB", "ED", "JR", "MR", "OL", "SB" };
 

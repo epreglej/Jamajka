@@ -7,7 +7,8 @@ using Unity.Collections;
 
 public class PlayerGameScript : NetworkBehaviour
 {
-    public string username = string.Empty;
+    // public NetworkVariable<FixedString32Bytes> username = new NetworkVariable<FixedString32Bytes>();
+    // public string username = string.Empty;
     public NetworkVariable<int> player_index = new NetworkVariable<int>(-1);
 
     // card options
@@ -43,14 +44,11 @@ public class PlayerGameScript : NetworkBehaviour
         public int amount;
     }
 
-    public void Awake()
-    {
-        username = "Player" + Random.Range(1,1000);
-    }
-
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
+
+        
 
         for (int i = 0; i < 5; i++)
         {
@@ -66,10 +64,15 @@ public class PlayerGameScript : NetworkBehaviour
     {
         if (IsOwner)
         {
+            
             ulong playerNetworkObjectId = GetComponent<NetworkObject>().NetworkObjectId;
-            GameManager.instance.AddPlayerServerRPC(playerNetworkObjectId);
+            GameManager.instance.AddPlayerServerRpc(playerNetworkObjectId);
+
+            //string username = "Player" + Random.Range(1, 1000);
+            GameManager.instance.AddPlayerUsernameServerRpc("Player" + Random.Range(1, 1000));
         }
     }
+    
     
     // Osigurava da svaki player ima listu drugih na istom indexu
     [Rpc(SendTo.NotServer, RequireOwnership = false)]
@@ -83,6 +86,8 @@ public class PlayerGameScript : NetworkBehaviour
             Debug.LogError("WHATAFAK, PlayerGameScript");
         }
     }
+    
+    
 
     // Lokalno postavljanje playera
     async void SetupListOnClient(int index)

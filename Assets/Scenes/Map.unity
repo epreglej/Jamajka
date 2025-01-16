@@ -9471,14 +9471,30 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3790679339411479826, guid: 2492e10df237af54f868daf2d61ad8ee, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3790679339411479826, guid: 2492e10df237af54f868daf2d61ad8ee, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 5339258603315455522, guid: 2492e10df237af54f868daf2d61ad8ee, type: 3}
       propertyPath: m_Name
       value: Square
       objectReference: {fileID: 0}
     - target: {fileID: 7814286688236012764, guid: 2492e10df237af54f868daf2d61ad8ee, type: 3}
+      propertyPath: m_Type
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7814286688236012764, guid: 2492e10df237af54f868daf2d61ad8ee, type: 3}
       propertyPath: m_Sprite
       value: 
       objectReference: {fileID: -556224293, guid: 774e1bd52b1d11247978686ae2197d85, type: 3}
+    - target: {fileID: 7814286688236012764, guid: 2492e10df237af54f868daf2d61ad8ee, type: 3}
+      propertyPath: m_Color.a
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -9881,6 +9897,11 @@ PrefabInstance:
 Transform:
   m_CorrespondingSourceObject: {fileID: 462332, guid: 578f9d3214d5d44418cc636e3cabe5fa, type: 3}
   m_PrefabInstance: {fileID: 1072038562}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &1078247139 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 5339258603315455522, guid: 2492e10df237af54f868daf2d61ad8ee, type: 3}
+  m_PrefabInstance: {fileID: 2075718807}
   m_PrefabAsset: {fileID: 0}
 --- !u!1001 &1082096491
 PrefabInstance:
@@ -17992,13 +18013,41 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 5339258603315455522, guid: 2492e10df237af54f868daf2d61ad8ee, type: 3}
+      insertIndex: 4
+      addedObject: {fileID: 2075718813}
   m_SourcePrefab: {fileID: 100100000, guid: 2492e10df237af54f868daf2d61ad8ee, type: 3}
 --- !u!4 &2075718808 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 3579491711330181587, guid: 2492e10df237af54f868daf2d61ad8ee, type: 3}
   m_PrefabInstance: {fileID: 2075718807}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &2075718813
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1078247139}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  GlobalObjectIdHash: 3025811238
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 1
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
 --- !u!1001 &2075980826
 PrefabInstance:
   m_ObjectHideFlags: 0

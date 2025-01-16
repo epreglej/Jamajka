@@ -744,19 +744,26 @@ public class GameManager : NetworkBehaviour
         return SquareType.PirateLair;
     }
 
+
     [Rpc(SendTo.Server)]
-    public void AddPlayerServerRPC(ulong playerNetworkObjectId)
+    public void AddPlayerServerRpc(ulong playerNetworkObjectId)
     {
         NetworkObject playerNetworkObject = NetworkManager.Singleton.SpawnManager.SpawnedObjects[playerNetworkObjectId];
         PlayerGameScript player = playerNetworkObject.gameObject.GetComponent<PlayerGameScript>();
 
         players.Add(player);
-        usernames.Add(player.username);
+        // usernames.Add(player.username);
 
         player.player_index.Value = players.Count - 1;
-
-        // UpdatePlayerListUIClientRpc();
     }
+
+
+    [Rpc(SendTo.Server)]
+    public void AddPlayerUsernameServerRpc(string username)
+    {
+        usernames.Add(username);
+    }
+
 
     [ClientRpc]
     public void UpdatePlayerListUIClientRpc()
