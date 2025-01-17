@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 using Unity.Netcode;
@@ -20,8 +20,29 @@ public class Square : NetworkBehaviour
 
         if (canvasTransform != null)
         {
-            TextMeshProUGUI textComponent = canvasTransform.GetComponentInChildren<TextMeshProUGUI>();
+            TextMeshProUGUI textComponent = canvasTransform.Find("Resources").GetComponent<TextMeshProUGUI>();
 
+            if(resourceValue == 0)
+            {
+                textComponent.text = "";
+            }
+            else if (resourceValue == 1)
+            {
+                textComponent.text = "◆";
+            }
+            else if (resourceValue == 2)
+            {
+                textComponent.text = "◆◆";
+            }
+            else if (resourceValue == 3) 
+            {
+                textComponent.text = "◆◆◆";
+            }
+            else if(resourceValue == 4)
+            {
+                textComponent.text = "◆◆\n◆◆";
+            }
+            /*
             if (textComponent != null)
             {
                 if (int.TryParse(textComponent.text, out int parsedId))
@@ -37,6 +58,7 @@ public class Square : NetworkBehaviour
             {
                 Debug.LogWarning("No TextMeshProUGUI component found within the Canvas of this Square.");
             }
+            */
         }
         else
         {
