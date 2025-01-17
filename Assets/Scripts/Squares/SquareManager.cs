@@ -26,7 +26,6 @@ public class SquareManager : NetworkBehaviour
         };
     }
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
         // Find all Squares that are child to current GameObject (Square Manager)
