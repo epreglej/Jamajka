@@ -630,6 +630,7 @@ public class GameManager : NetworkBehaviour
 
         if (cardOption == ActionCardOption.MoveForward || cardOption == ActionCardOption.MoveBackward)
         {
+            if (cardOption == ActionCardOption.MoveBackward) ammount *= -1;
             PlayerMovement movementComponent = players[player_on_turn.Value].GetComponent<PlayerMovement>();
             Debug.Log("Move for " + ammount);
             movementComponent.MoveXSquares(ammount);
