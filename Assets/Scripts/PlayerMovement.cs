@@ -52,7 +52,7 @@ public class PlayerMovement : NetworkBehaviour
 
     public void MoveToSquare(int squareID)
     {
-        if(squareID == 0 && this.GetComponent<PlayerGameScript>().currentSquareID.Value == 30)
+        if (squareID == 0 && this.GetComponent<PlayerGameScript>().currentSquareID.Value == 30)
         {
             // TODO: dominik?
             // ovo nije dobar kod ako se mogu vracati unazad pa onda opet 1 korak naprijed???
@@ -61,7 +61,15 @@ public class PlayerMovement : NetworkBehaviour
 
         foreach (var square in SquareManager.instance.squares)
         {
-            if (square.id == squareID) 
+            if (square.id == this.GetComponent<PlayerGameScript>().currentSquareID.Value)
+            {
+                square.RemovePlayerIndexFromSquareClientRpc(this.GetComponent<PlayerGameScript>().player_index.Value);
+            }
+        }
+
+        foreach (var square in SquareManager.instance.squares)
+        {
+            if (square.id == squareID)
             {
                 Vector3 destination = square.transform.position;
                 if (square.GetPlayerIndexesOnSquare().Count == 1)
@@ -80,10 +88,6 @@ public class PlayerMovement : NetworkBehaviour
                 square.AddPlayerIndexToSquareClientRpc(this.GetComponent<PlayerGameScript>().player_index.Value);
                 this.GetComponent<PlayerGameScript>().currentSquareID = new NetworkVariable<int>(squareID);
                 MoveTowardsTargetPositionClientRpc(destination);
-            }
-            else if (square.id == this.GetComponent<PlayerGameScript>().currentSquareID.Value)
-            {
-                square.RemovePlayerIndexFromSquareClientRpc(this.GetComponent<PlayerGameScript>().player_index.Value);
             }
         }
     }

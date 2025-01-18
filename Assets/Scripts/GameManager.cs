@@ -721,8 +721,12 @@ public class GameManager : NetworkBehaviour
             // 6 or 8 = move to sea (food) square
             // 10 = move back to pirate lair
             // star = stay put
+            int square = SquareManager.instance.GetPlayerSquareID(player_on_turn.Value);
             int move_ammount = 0;
 
+            if (attacker_combat_dice.Value == 2 || attacker_combat_dice.Value == 4) move_ammount = -1 * SquareManager.instance.FindPreviousSquareType(square, SquareType.Port);
+            else if (attacker_combat_dice.Value == 6 || attacker_combat_dice.Value == 8) move_ammount = -1 * SquareManager.instance.FindPreviousSquareType(square, SquareType.Sea);
+            else if (attacker_combat_dice.Value == 10) move_ammount = -1 * SquareManager.instance.FindPreviousSquareType(square, SquareType.PirateLair);
 
             if (attacker_combat_dice.Value != STAR_COMBAT_VALUE)
             {

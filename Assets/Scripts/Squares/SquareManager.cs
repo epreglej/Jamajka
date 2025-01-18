@@ -86,4 +86,16 @@ public class SquareManager : NetworkBehaviour
 
         return GameManager.SquareType.None;
     }
+
+    public int FindPreviousSquareType(int square_id, GameManager.SquareType targetSquareType)
+    {
+        int delta = 1;
+
+        while(((square_id - delta) > 0) && squares[square_id - delta].type != targetSquareType)
+        {
+            delta++;
+        }
+
+        return delta;
+    }
 }
