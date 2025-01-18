@@ -341,31 +341,31 @@ public class PlayerGameScript : NetworkBehaviour
     }
 
     [Rpc(SendTo.Everyone, RequireOwnership = false)]
-    public void GetTreasureSaransSaber()
+    public void GetTreasureSaransSaberRpc()
     {
         hasSaransSaber = true;
     }
 
     [Rpc(SendTo.Everyone, RequireOwnership = false)]
-    public void GetTreasureMorgansMap()
+    public void GetTreasureMorgansMapRpc()
     {
         hasMorgansMap = true;
     }
 
     [Rpc(SendTo.Everyone, RequireOwnership = false)]
-    public void GetTreasureLadyBeth()
+    public void GetTreasureLadyBethRpc()
     {
         hasLadyBeth = true;
     }
 
     [Rpc(SendTo.Everyone, RequireOwnership = false)]
-    public void GetTreasureAdditionalHold()
+    public void GetTreasureAdditionalHoldRpc()
     {
         has6thHold = true;
     }
 
     [Rpc(SendTo.Everyone, RequireOwnership = false)]
-    public void GetTreasurePoints(int treasureType)
+    public void GetTreasurePointsRpc(int treasureType)
     {
         point_treasure_cards.Add(((GameManager.TreasureCard)treasureType));
     }

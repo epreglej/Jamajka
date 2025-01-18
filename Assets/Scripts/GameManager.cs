@@ -701,23 +701,23 @@ public class GameManager : NetworkBehaviour
                 {
                     if(tr_card == TreasureCard.MorgansMap)
                     {
-                        player_gamescript.GetTreasureMorgansMap();
+                        player_gamescript.GetTreasureMorgansMapRpc();
                     }
                     else if(tr_card == TreasureCard.LadyBeth)
                     {
-                        player_gamescript.GetTreasureLadyBeth();
+                        player_gamescript.GetTreasureLadyBethRpc();
                     }
                     else if(tr_card == TreasureCard.AdditionHoldSpace)
                     {
-                        player_gamescript.GetTreasureAdditionalHold();
+                        player_gamescript.GetTreasureAdditionalHoldRpc();
                     }
                     else if (tr_card == TreasureCard.SaransSaber)
                     {
-                        player_gamescript.GetTreasureSaransSaber();
+                        player_gamescript.GetTreasureSaransSaberRpc();
                     }
                     else
                     {
-                        player_gamescript.GetTreasurePoints(((int)tr_card));
+                        player_gamescript.GetTreasurePointsRpc(((int)tr_card));
                     }
                 }
             }
