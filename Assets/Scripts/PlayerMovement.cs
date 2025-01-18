@@ -7,6 +7,8 @@ public class PlayerMovement : NetworkBehaviour
 {
     public bool isMoving = false;
 
+    private bool hasReachedSquare = true;
+
     void Start()
     {
         this.transform.position = SquareManager.instance.squares[0].transform.position;
@@ -25,14 +27,16 @@ public class PlayerMovement : NetworkBehaviour
     private IEnumerator MoveXSquaresCoroutine(int x)
     {
         int startingField = this.GetComponent<PlayerGameScript>().currentSquareID.Value;
-        
+        hasReachedSquare = true;
 
         if (x > 0)
         {
             for (int i = 1; i <= x; i++)
             {
+                if (!hasReachedSquare) yield return new WaitForSeconds(1f);
+                hasReachedSquare = false;
                 MoveToSquare((startingField + i) % 31);
-                yield return new WaitForSeconds(1.5f);
+                //yield return new WaitForSeconds(1.5f);
             }
         }
         else if (x < 0) 
@@ -41,8 +45,10 @@ public class PlayerMovement : NetworkBehaviour
             if (startingField < Mathf.Abs(x)) x = -1 * startingField;
             for (int i = -1; i >= x; i--)
             {
+                if (!hasReachedSquare) yield return new WaitForSeconds(1f);
+                hasReachedSquare = false;
                 MoveToSquare(((startingField + i) % 31 + 31) % 31);
-                yield return new WaitForSeconds(1.5f);
+                // yield return new WaitForSeconds(1.5f);
             }
         }
         yield return new WaitForSeconds(1f);
@@ -111,6 +117,8 @@ public class PlayerMovement : NetworkBehaviour
 
             yield return null;
         }
+
+        hasReachedSquare = true;
     }
 
 

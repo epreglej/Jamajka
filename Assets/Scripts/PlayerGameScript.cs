@@ -33,11 +33,12 @@ public class PlayerGameScript : NetworkBehaviour
     private int replaceHold_amount;
     private int replaceHold_index = -1;
 
-    // action cards
+    // treasure cards
     public bool hasMorgansMap = false; // draw 2 cards treasure card
     public bool hasSaransSaber = false; // rerol combat dice
     public bool hasLadyBeth = false; // +2 in combat
     public bool has6thHold = false; // 6. hold spot, we ignore this for now
+    public List<GameManager.TreasureCard> point_treasure_cards = new List<GameManager.TreasureCard>();
 
     public struct Hold
     {
@@ -337,5 +338,35 @@ public class PlayerGameScript : NetworkBehaviour
     public void OpenOpponentChoiceClientRpc(int[] players)
     {
         GameManager.instance.CombatUI.GetComponent<CombatUIScript>().OpenOpponentChoice(players);
+    }
+
+    [Rpc(SendTo.Everyone, RequireOwnership = false)]
+    public void GetTreasureSaransSaber()
+    {
+        hasSaransSaber = true;
+    }
+
+    [Rpc(SendTo.Everyone, RequireOwnership = false)]
+    public void GetTreasureMorgansMap()
+    {
+        hasMorgansMap = true;
+    }
+
+    [Rpc(SendTo.Everyone, RequireOwnership = false)]
+    public void GetTreasureLadyBeth()
+    {
+        hasLadyBeth = true;
+    }
+
+    [Rpc(SendTo.Everyone, RequireOwnership = false)]
+    public void GetTreasureAdditionalHold()
+    {
+        has6thHold = true;
+    }
+
+    [Rpc(SendTo.Everyone, RequireOwnership = false)]
+    public void GetTreasurePoints(int treasureType)
+    {
+        point_treasure_cards.Add(((GameManager.TreasureCard)treasureType));
     }
 }
