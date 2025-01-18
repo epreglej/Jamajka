@@ -87,14 +87,16 @@ public class Square : NetworkBehaviour
     {
         if(type == GameManager.SquareType.PirateLair)
         {
-            Debug.Log("Setting treasure");
             this.treasureCard = treasureCard;
         }
     }
 
     public GameManager.TreasureCard GetTreasureCard()
     {
-        return this.treasureCard;
+        if (type == GameManager.SquareType.PirateLair)
+        {
+            return this.treasureCard;
+        }
     }
 }
 
