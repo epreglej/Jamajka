@@ -9,7 +9,7 @@ public class Square : NetworkBehaviour
     public int id;
     public int resourceValue;
     public GameManager.SquareType type;
-    // public TreasureCard tc 
+    public GameManager.TreasureCard treasureCard;
 
     public List<int> playerIndicesOnSquare;
 
@@ -42,30 +42,19 @@ public class Square : NetworkBehaviour
             {
                 textComponent.text = "◆◆\n◆◆";
             }
-            /*
-            if (textComponent != null)
-            {
-                if (int.TryParse(textComponent.text, out int parsedId))
-                {
-                    id = parsedId;
-                }
-                else
-                {
-                    Debug.LogWarning("Failed to parse Square ID from the Text (TMP). Ensure it contains a valid integer.");
-                }
-            }
-            else
-            {
-                Debug.LogWarning("No TextMeshProUGUI component found within the Canvas of this Square.");
-            }
-            */
         }
         else
         {
             Debug.LogWarning("No Canvas child found for this Square.");
         }
     }
-    
+
+    public override void OnNetworkSpawn()
+    {
+        base.OnNetworkSpawn();
+        // SetTreasureCard(GameManager.TreasureCard.SaransSaber);
+    }
+
     [ClientRpc]
     public void AddPlayerIndexToSquareClientRpc(int index)
     {
@@ -86,6 +75,26 @@ public class Square : NetworkBehaviour
     public int GetResourceValue()
     {
         return resourceValue;
+    }
+
+    public void SetTreasureCard(GameManager.TreasureCard treasureCard)
+    {
+        SetTreasureCardClientRpc(treasureCard);
+    }
+
+    [ClientRpc]
+    private void SetTreasureCardClientRpc(GameManager.TreasureCard treasureCard)
+    {
+        if(type == GameManager.SquareType.PirateLair)
+        {
+            Debug.Log("Setting treasure");
+            this.treasureCard = treasureCard;
+        }
+    }
+
+    public GameManager.TreasureCard GetTreasureCard()
+    {
+        return this.treasureCard;
     }
 }
 

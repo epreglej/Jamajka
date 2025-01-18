@@ -11,7 +11,8 @@ public class PlayerMovement : NetworkBehaviour
     {
         this.transform.position = SquareManager.instance.squares[0].transform.position;
 
-        MoveXSquares(-1);
+        // ovo zvati za kretanje
+        // MoveXSquares(-1);
     }
 
     public void MoveXSquares(int x)
