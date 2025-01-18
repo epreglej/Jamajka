@@ -40,11 +40,50 @@ public class SquareManager : NetworkBehaviour
     {
         foreach (var square in squares)
         {
-            if(square.id == id)
+            if (square.id == id)
             {
                 return square.playerIndicesOnSquare;
             }
         }
         return null;
+    }
+
+    public Square GetPlayerSquare(int player_index)
+    {
+        foreach (var square in squares)
+        {
+            if (square.playerIndicesOnSquare.Contains(player_index))
+            {
+                return square;
+            }
+        }
+
+        return null;
+    }
+
+    public int GetPlayerSquareID(int player_index)
+    {
+        foreach (var square in squares)
+        {
+            if (square.playerIndicesOnSquare.Contains(player_index))
+            {
+                return square.id;
+            }
+        }
+
+        return -1;
+    }
+
+    public GameManager.SquareType GetPlayerSquareType(int player_index)
+    {
+        foreach (var square in squares)
+        {
+            if (square.playerIndicesOnSquare.Contains(player_index))
+            {
+                return square.type;
+            }
+        }
+
+        return GameManager.SquareType.None;
     }
 }

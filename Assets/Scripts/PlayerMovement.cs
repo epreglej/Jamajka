@@ -5,7 +5,7 @@ using UnityEngine;
 
 public class PlayerMovement : NetworkBehaviour
 {
-    private bool isMoving = false;
+    public bool isMoving = false;
 
     void Start()
     {
@@ -17,6 +17,8 @@ public class PlayerMovement : NetworkBehaviour
 
     public void MoveXSquares(int x)
     {
+        isMoving = true;
+        Debug.Log("Move for x sq " + x);
         StartCoroutine(MoveXSquaresCoroutine(x));
     }
 
@@ -41,7 +43,12 @@ public class PlayerMovement : NetworkBehaviour
                 yield return new WaitForSeconds(1f);
             }
         }
+
+        isMoving = false;
+        Debug.Log("Movement over");
     }
+
+
 
     public void MoveToSquare(int squareID)
     {
@@ -99,4 +106,6 @@ public class PlayerMovement : NetworkBehaviour
             yield return null;
         }
     }
+
+
 }

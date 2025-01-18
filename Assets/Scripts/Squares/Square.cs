@@ -95,8 +95,14 @@ public class Square : NetworkBehaviour
     {
         if (type == GameManager.SquareType.PirateLair)
         {
-            return this.treasureCard;
+            GameManager.TreasureCard card = this.treasureCard;
+
+            SetTreasureCard(GameManager.TreasureCard.None);
+
+            return card;
         }
+
+        return GameManager.TreasureCard.None;
     }
 }
 
