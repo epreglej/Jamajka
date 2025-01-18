@@ -25,25 +25,27 @@ public class PlayerMovement : NetworkBehaviour
     private IEnumerator MoveXSquaresCoroutine(int x)
     {
         int startingField = this.GetComponent<PlayerGameScript>().currentSquareID.Value;
+        
 
         if (x > 0)
         {
             for (int i = 1; i <= x; i++)
             {
                 MoveToSquare((startingField + i) % 31);
-                yield return new WaitForSeconds(1f);
+                yield return new WaitForSeconds(1.5f);
             }
         }
         else if (x < 0) 
         {
             Debug.Log("moving backwards.");
+            if (startingField < Mathf.Abs(x)) x = -1 * startingField;
             for (int i = -1; i >= x; i--)
             {
                 MoveToSquare(((startingField + i) % 31 + 31) % 31);
-                yield return new WaitForSeconds(1f);
+                yield return new WaitForSeconds(1.5f);
             }
         }
-
+        yield return new WaitForSeconds(1f);
         isMoving = false;
         Debug.Log("Movement over");
     }

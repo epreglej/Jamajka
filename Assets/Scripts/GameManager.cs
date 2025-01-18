@@ -324,6 +324,7 @@ public class GameManager : NetworkBehaviour
     {
         int square_id = SquareManager.instance.GetPlayerSquareID(player_on_turn.Value);
         List<int> opponent_indices = SquareManager.instance.GetPlayerIndicesFromSquareWithId(square_id);
+        if (opponent_indices == null || square_id == 0) return false;
         return opponent_indices.Count > 1;
     }
 
