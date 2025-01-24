@@ -342,6 +342,13 @@ public class CombatUIScript : NetworkBehaviour
         //Debug.Log("LoserPlayer index: " + loserPlayer.player_index.Value + ", parameter: " + loser);
         List<PlayerGameScript.Hold> holds = loserPlayer.holds;
 
+        DisplayHolds(holds);
+
+        ChooseHoldPanel.SetActive(true);
+        VictoryChoicePanel.SetActive(false);
+    }
+
+    private void DisplayHolds(List<PlayerGameScript.Hold> holds) {
         for (int i = 0; i < 5; i++) {
             TextMeshProUGUI holdText = holdPanels[i].Find("HoldContentsText").GetComponent<TextMeshProUGUI>();
             PlayerGameScript.Hold hold = holds[i];
@@ -349,10 +356,10 @@ public class CombatUIScript : NetworkBehaviour
             Image holdImage = holdPanels[i].Find("HoldContentsImage").GetComponent<Image>();
             holdImage.color = hold.amount > 0 ? Color.white : Color.clear;
             holdImage.sprite = GameManager.instance.HoldUI.GetSprite(hold.tokenType);
-        }
 
-        ChooseHoldPanel.SetActive(true);
-        VictoryChoicePanel.SetActive(false);
+            Button holdButton = holdPanels[i].GetComponentInChildren<Button>();
+            holdButton.interactable = hold.amount > 0;
+        }
     }
 
     public void ChooseHoldOnClick(int chosenHoldIndex) {
@@ -413,14 +420,12 @@ public class CombatUIScript : NetworkBehaviour
 
     private void DisplayOwnHolds() {
         List<PlayerGameScript.Hold> holds = winnerPlayer.holds;
+        DisplayHolds(holds);
 
+        bool allHoldsFull = holds.TrueForAll(hold => hold.amount > 0);
         for (int i = 0; i < 5; i++) {
-            TextMeshProUGUI holdText = holdPanels[i].Find("HoldContentsText").GetComponent<TextMeshProUGUI>();
-            PlayerGameScript.Hold hold = holds[i];
-            holdText.text = hold.amount.ToString() + " " + hold.tokenType.ToString();
-            Image holdImage = holdPanels[i].Find("HoldContentsImage").GetComponent<Image>();
-            holdImage.color = hold.amount > 0 ? Color.white : Color.clear;
-            holdImage.sprite = GameManager.instance.HoldUI.GetSprite(hold.tokenType);
+            Button holdButton = holdPanels[i].GetComponentInChildren<Button>();
+            holdButton.interactable = allHoldsFull ? holds[i].tokenType != loserPlayer.holds[chosenHoldIndex].tokenType : holds[i].amount == 0;
         }
     }
 
