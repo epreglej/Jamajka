@@ -9,6 +9,7 @@ public class HoldUIScript : MonoBehaviour
     [SerializeField] private Sprite _foodTokenSprite;
     [SerializeField] private Sprite _goldTokenSprite;
     [SerializeField] private Sprite _cannonTokenSprite;
+    [SerializeField] private GameObject _slotContainer;
 
     
     public void UpdateSlot(int slotIndex, GameManager.TokenType tokenType, int amount) {
@@ -23,7 +24,7 @@ public class HoldUIScript : MonoBehaviour
         }
     }
 
-    private Sprite GetSprite(GameManager.TokenType tokenType) {
+    public Sprite GetSprite(GameManager.TokenType tokenType) {
         switch (tokenType) {
             case GameManager.TokenType.Food:
                 return _foodTokenSprite;
@@ -33,6 +34,21 @@ public class HoldUIScript : MonoBehaviour
                 return _cannonTokenSprite;
             default:
                 return null;
+        }
+    }
+
+    public void Show() {
+        _slotContainer.SetActive(true);
+    }
+
+    public void Hide() {
+        _slotContainer.SetActive(false);
+    }
+
+    public void Clear() {
+        foreach (GameObject slot in _slots) {
+            slot.transform.GetChild(0).GetComponent<Image>().color = Color.clear;
+            slot.transform.GetChild(1).GetComponent<TextMeshProUGUI>().text = "";
         }
     }
 }

@@ -345,6 +345,9 @@ public class CombatUIScript : NetworkBehaviour
             TextMeshProUGUI holdText = holdPanels[i].Find("HoldContentsText").GetComponent<TextMeshProUGUI>();
             PlayerGameScript.Hold hold = holds[i];
             holdText.text = hold.amount.ToString() + " " + hold.tokenType.ToString();
+            Image holdImage = holdPanels[i].Find("HoldContentsImage").GetComponent<Image>();
+            holdImage.color = hold.amount > 0 ? Color.white : Color.clear;
+            holdImage.sprite = GameManager.instance.HoldUI.GetSprite(hold.tokenType);
         }
 
         ChooseHoldPanel.SetActive(true);
@@ -414,6 +417,9 @@ public class CombatUIScript : NetworkBehaviour
             TextMeshProUGUI holdText = holdPanels[i].Find("HoldContentsText").GetComponent<TextMeshProUGUI>();
             PlayerGameScript.Hold hold = holds[i];
             holdText.text = hold.amount.ToString() + " " + hold.tokenType.ToString();
+            Image holdImage = holdPanels[i].Find("HoldContentsImage").GetComponent<Image>();
+            holdImage.color = hold.amount > 0 ? Color.white : Color.clear;
+            holdImage.sprite = GameManager.instance.HoldUI.GetSprite(hold.tokenType);
         }
     }
 
