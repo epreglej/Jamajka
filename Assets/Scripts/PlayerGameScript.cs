@@ -30,6 +30,8 @@ public class PlayerGameScript : NetworkBehaviour
     private GameManager.TokenType replaceHold_token;
     private int replaceHold_amount;
     private int replaceHold_index = -1;
+    private HoldUIScript holdUI;
+
 
     // action cards
     public bool hasMorgansMap = false; // draw 2 cards treasure card
@@ -61,6 +63,8 @@ public class PlayerGameScript : NetworkBehaviour
 
             holds.Add(h);
         }    
+
+        holdUI = GameManager.instance.HoldUI;
     }
 
     private void Start()
@@ -130,31 +134,11 @@ public class PlayerGameScript : NetworkBehaviour
     public void AddInitialResources()
     {
         InitializeDeckClientRpc();
-        Hold hold1 = holds[0]; 
-        hold1.tokenType = GameManager.TokenType.Food;
-        hold1.amount = 3;
-        holds[0] = hold1; // structs are value type funny
 
-        Hold hold2 = holds[1];
-        hold2.tokenType = GameManager.TokenType.Gold;
-        hold2.amount = 3;
-        holds[1] = hold2;
-
-        InitialHoldsBandaidFixRpc(); // NOTE - DUJE: bandaid fix za sync hold za client, bez diranja drugog koda
+        UpdatePlayerHoldsClientRpc(GameManager.TokenType.Food, 3, 0);
+        UpdatePlayerHoldsClientRpc(GameManager.TokenType.Gold, 3, 1);
     }
 
-    [Rpc(SendTo.NotServer)]
-    private void InitialHoldsBandaidFixRpc() {
-        Hold hold1 = holds[0]; 
-        hold1.tokenType = GameManager.TokenType.Food;
-        hold1.amount = 3;
-        holds[0] = hold1;
-
-        Hold hold2 = holds[1];
-        hold2.tokenType = GameManager.TokenType.Gold;
-        hold2.amount = 3;
-        holds[1] = hold2;
-    }
 
     // TODO - DUJE - ovo pozivas da bi dodal resurse u hold ( ako ima free space sam doda - treba prikazat, ako nema free space treba zamijenit )
 
@@ -371,6 +355,10 @@ public class PlayerGameScript : NetworkBehaviour
         h.tokenType = type;
         h.amount = amount;
         holds[holdIndex] = h;
+
+        if (IsOwner) {
+            // update hold UI
+        }
     }
 
     // NOTE - DUJE: ovo ne treba biti rpc ako se syncaju treasure cardovi, neznam zasto sam ovo radia
@@ -404,7 +392,7 @@ public class PlayerGameScript : NetworkBehaviour
         
     }
 
-    [Rpc(SendTo.Everyone)]
+    [Rpc(SendTo.Everyone, RequireOwnership = false)]
     public void UpdateTreasureCardRpc(int cardIndex, bool hasCard) {
         switch (cardIndex) {
             case 1:
