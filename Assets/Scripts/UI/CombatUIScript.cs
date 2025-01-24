@@ -338,6 +338,7 @@ public class CombatUIScript : NetworkBehaviour
     private void DisplayChooseHoldPanel(int winner, int loser) {
         loserPlayer = GameManager.instance.players[loser];
         winnerPlayer = GameManager.instance.players[winner];
+        chooseHoldText.text = "Choose a Hold to Steal from";
         //Debug.Log("LoserPlayer index: " + loserPlayer.player_index.Value + ", parameter: " + loser);
         List<PlayerGameScript.Hold> holds = loserPlayer.holds;
 
@@ -458,6 +459,7 @@ public class CombatUIScript : NetworkBehaviour
     }
 
     public void OnButtonBackToVictoryChoice() {
+        chosenHoldIndex = -1;
         ChooseTreasureCardPanel.SetActive(false);
         ChooseHoldPanel.SetActive(false);
         VictoryChoicePanel.SetActive(true);
