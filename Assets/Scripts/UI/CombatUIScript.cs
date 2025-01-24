@@ -400,7 +400,7 @@ public class CombatUIScript : NetworkBehaviour
         VictoryChoicePanel.SetActive(false);
 
 
-        // TODO - DUJE: StealTreasureCardsRpc with just a check of which cards the loser has
+        // TODO - DUJE: replace StealTreasureCardsRpc with just a check of which cards the loser has
         GameManager.instance.players[loserPlayer.player_index.Value].StealTreasureCardsRpc(winnerPlayer.player_index.Value);
 
         // NOTE - DUJE: below should be called at the end of the victory choice (rpc) chain
@@ -418,7 +418,6 @@ public class CombatUIScript : NetworkBehaviour
     }
 
     public void DisplayStealTreasureCardPanel(bool[] treasureCards) {   
-        // TODO - DUJE: disable and enable buttons based on the treasure cards the loser has
         ChooseTreasureCardPanel.SetActive(true);
         VictoryChoicePanel.SetActive(false);
 

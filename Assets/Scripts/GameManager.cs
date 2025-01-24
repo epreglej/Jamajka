@@ -44,6 +44,7 @@ public class GameManager : NetworkBehaviour
     public Canvas DiceUI;
     public Canvas CombatUI;
     public Canvas ActionCardUI;
+    public HoldUIScript HoldUI;
 
     // Za rollanje Combat kocke - samo random index na listu
     public static List<int> COMBAT_DICE_VALUES = new List<int>{2, 4, 6, 8, STAR_COMBAT_VALUE};

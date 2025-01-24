@@ -64,7 +64,6 @@ public class PlayerGameScript : NetworkBehaviour
             holds.Add(h);
         }    
 
-        holdUI = GameManager.instance.HoldUI;
     }
 
     private void Start()
@@ -74,6 +73,8 @@ public class PlayerGameScript : NetworkBehaviour
             ulong playerNetworkObjectId = GetComponent<NetworkObject>().NetworkObjectId;
             GameManager.instance.AddPlayerServerRPC(playerNetworkObjectId);
         }
+
+        holdUI = GameManager.instance.HoldUI;
     }
     
     // Osigurava da svaki player ima listu drugih na istom indexu
@@ -357,7 +358,7 @@ public class PlayerGameScript : NetworkBehaviour
         holds[holdIndex] = h;
 
         if (IsOwner) {
-            // update hold UI
+            holdUI.UpdateSlot(holdIndex, type, amount);
         }
     }
 
