@@ -533,8 +533,25 @@ public class CombatUIScript : NetworkBehaviour
         _dayAction = dayAction;
         _backButton.interactable = false;
 
+        if (holds.TrueForAll(hold => hold.tokenType == tokenType)) {
+            Debug.Log("All holds are full of the same resource type, skipping loading");
+            // reset choose hold panel state
+            chooseHoldText.text = "Choose a Hold to Steal from";
+            _loadResourceAmount = -1;
+            _loadResourceType = GameManager.TokenType.None;
+            winnerPlayer = null;
+            _loadingResources = false;
+            _backButton.interactable = true;
+            ChooseHoldPanel.SetActive(false);
+            if (_dayAction) {
+                GameManager.instance.PlayerAction1EndedServerRPC();
+            } else {
+                GameManager.instance.PlayerAction2EndedServerRPC();
+            }
+        }
+
         bool allHoldsFull = holds.TrueForAll(hold => hold.amount > 0);
-        // TODO - DUJE: add check for if all holds hold the same resource type, then the player can't choose (soft lock)
+
         for (int i = 0; i < 5; i++) {
             Button holdButton = holdPanels[i].GetComponentInChildren<Button>();
             holdButton.interactable = allHoldsFull ? holds[i].tokenType != tokenType : holds[i].amount == 0;
@@ -542,11 +559,11 @@ public class CombatUIScript : NetworkBehaviour
     }
 
     public void OnButtonLoadResourceIntoHold(int holdIndex) {
+        Debug.Log("Loading " + _loadResourceAmount + " " + _loadResourceType + " into hold " + holdIndex);
+        GameManager.instance.UpdatePlayerHoldsServerRpc(winnerPlayer.player_index.Value, _loadResourceType, _loadResourceAmount, holdIndex);
+        
         // reset choose hold panel state
         chooseHoldText.text = "Choose a Hold to Steal from";
-        Debug.Log("Loading " + _loadResourceAmount + " " + _loadResourceType + " into hold " + holdIndex);
-
-        GameManager.instance.UpdatePlayerHoldsServerRpc(winnerPlayer.player_index.Value, _loadResourceType, _loadResourceAmount, holdIndex);
         _loadResourceAmount = -1;
         _loadResourceType = GameManager.TokenType.None;
         winnerPlayer = null;
