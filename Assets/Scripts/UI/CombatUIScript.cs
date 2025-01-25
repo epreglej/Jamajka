@@ -40,7 +40,8 @@ public class CombatUIScript : NetworkBehaviour
     // Resource loading UI variables
     private int _loadResourceAmount = -1;
     private GameManager.TokenType _loadResourceType = GameManager.TokenType.None;
-    bool _loadingResources = false;
+    private bool _loadingResources = false;
+    private bool _dayAction = false;
 
     bool attackerTurn = true;
     bool isAttacker = false;
@@ -517,7 +518,8 @@ public class CombatUIScript : NetworkBehaviour
     }
 
     // used for loading resources into holds, not stealing
-    public void DisplayHoldLoadingPanel(List<PlayerGameScript.Hold> holds, GameManager.TokenType tokenType, int amount, PlayerGameScript winnerPlayer) {
+    public void DisplayHoldLoadingPanel(List<PlayerGameScript.Hold> holds, GameManager.TokenType tokenType, 
+                                        int amount, PlayerGameScript winnerPlayer, bool dayAction) {
         Debug.Log("Hello from display hold loading panel");
         ChooseHoldPanel.SetActive(true);
         DisplayHolds(holds);
@@ -527,6 +529,7 @@ public class CombatUIScript : NetworkBehaviour
         _loadResourceType = tokenType;
         this.winnerPlayer = winnerPlayer; // reusing the winner player variable for loading resources
         _loadingResources = true;
+        _dayAction = dayAction;
 
         bool allHoldsFull = holds.TrueForAll(hold => hold.amount > 0);
         // TODO - DUJE: add check for if all holds hold the same resource type, then the player can't choose (soft lock)
@@ -547,5 +550,11 @@ public class CombatUIScript : NetworkBehaviour
         winnerPlayer = null;
         _loadingResources = false;
         ChooseHoldPanel.SetActive(false);
+
+        if (_dayAction) {
+            GameManager.instance.PlayerAction1EndedServerRPC();
+        } else {
+            GameManager.instance.PlayerAction2EndedServerRPC();
+        }
     }
 }

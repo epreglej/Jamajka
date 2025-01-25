@@ -637,13 +637,13 @@ public class GameManager : NetworkBehaviour
         currentPlayedCard.Value = playedCardData;
     }
 
-    [ServerRpc]
+    [Rpc(SendTo.Server, RequireOwnership = false)]
     public void PlayerAction1EndedServerRPC()
     {
         ExecutePlayerAction(false);
     }
 
-    [ServerRpc]
+    [Rpc(SendTo.Server, RequireOwnership = false)]
     public void PlayerAction2EndedServerRPC()
     {
         EndPlayerTurn();
@@ -768,10 +768,10 @@ public class GameManager : NetworkBehaviour
         if (tokenType == TokenType.None) Debug.LogError("Trying to load a token that is not food, gold or cannon");
         Debug.Log("Loading " + amount + " " + tokenType + " to player " + player_on_turn.Value + " day: " + dayAction);
 
-        players[player_on_turn.Value].OpenHoldLoadingClientRpc(tokenType, amount);
+        players[player_on_turn.Value].OpenHoldLoadingClientRpc(tokenType, amount, dayAction);
 
-        if (dayAction) PlayerAction1EndedServerRPC();
-        else PlayerAction2EndedServerRPC();
+        //if (dayAction) PlayerAction1EndedServerRPC(); // find a way to call this after the player has chosen
+        //else PlayerAction2EndedServerRPC();
     }
 
     async void TryTaxPlayer(bool dayAction)
