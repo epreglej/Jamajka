@@ -459,4 +459,18 @@ public class PlayerGameScript : NetworkBehaviour
     {
         GameManager.instance.CombatUI.GetComponent<CombatUIScript>().DisplayHoldLoadingPanel(holds, token, amount, this, dayAction);
     }
+
+    public int GetResources(GameManager.TokenType tokenType)
+    {
+        int total = 0;
+        foreach (var hold in holds)
+        {
+            if (hold.tokenType == tokenType)
+            {
+                total += hold.amount;
+            }
+        }
+
+        return total;
+    }
 }
