@@ -521,7 +521,6 @@ public class CombatUIScript : NetworkBehaviour
     // used for loading resources into holds, not stealing
     public void DisplayHoldLoadingPanel(List<PlayerGameScript.Hold> holds, GameManager.TokenType tokenType, 
                                         int amount, PlayerGameScript winnerPlayer, bool dayAction) {
-        Debug.Log("Hello from display hold loading panel");
         ChooseHoldPanel.SetActive(true);
         DisplayHolds(holds);
 
@@ -559,7 +558,7 @@ public class CombatUIScript : NetworkBehaviour
     }
 
     public void OnButtonLoadResourceIntoHold(int holdIndex) {
-        Debug.Log("Loading " + _loadResourceAmount + " " + _loadResourceType + " into hold " + holdIndex);
+        //Debug.Log("Loading " + _loadResourceAmount + " " + _loadResourceType + " into hold " + holdIndex);
         GameManager.instance.UpdatePlayerHoldsServerRpc(winnerPlayer.player_index.Value, _loadResourceType, _loadResourceAmount, holdIndex);
         
         // reset choose hold panel state
