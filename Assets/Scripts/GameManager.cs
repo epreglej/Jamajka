@@ -748,8 +748,27 @@ public class GameManager : NetworkBehaviour
 
     void LoadResourceToPlayerHold(ActionCardOption cardOption, bool dayAction = true)
     {
-        // TODO - DUJE make a player choose a hold to put resource into
+        // TODO - DUJE: fix night action overriding day action when both are on card
+        int amount = dayAction ? day_dice_value.Value : night_dice_value.Value;
+        TokenType tokenType = TokenType.None;
+        
 
+        switch (cardOption) {
+            case ActionCardOption.LoadGold:
+                tokenType = TokenType.Gold;
+                break;
+            case ActionCardOption.LoadFood:
+                tokenType = TokenType.Food;
+                break;
+            case ActionCardOption.LoadCannon:
+                tokenType = TokenType.Cannon;
+                break;
+        }
+
+        if (tokenType == TokenType.None) Debug.LogError("Trying to load a token that is not food, gold or cannon");
+        Debug.Log("Loading " + amount + " " + tokenType + " to player " + player_on_turn.Value + " day: " + dayAction);
+
+        players[player_on_turn.Value].OpenHoldLoadingClientRpc(tokenType, amount);
 
         if (dayAction) PlayerAction1EndedServerRPC();
         else PlayerAction2EndedServerRPC();

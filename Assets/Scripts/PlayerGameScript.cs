@@ -447,4 +447,11 @@ public class PlayerGameScript : NetworkBehaviour
                 break;
         }
     }
+
+    [Rpc(SendTo.Owner)]
+    public void OpenHoldLoadingClientRpc(GameManager.TokenType token, int amount)
+    {
+        Debug.Log("Hello from OpenHoldLoadingClientRpc");
+        GameManager.instance.CombatUI.GetComponent<CombatUIScript>().DisplayHoldLoadingPanel(holds, token, amount, this);
+    }
 }

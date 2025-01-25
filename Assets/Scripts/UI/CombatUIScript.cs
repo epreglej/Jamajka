@@ -27,6 +27,7 @@ public class CombatUIScript : NetworkBehaviour
     [SerializeField] GameObject DefenderWinnerPanel;
     [SerializeField] GameObject TiePanel;
 
+    // Victory choice UI variables, used for stealing resources and treasure cards
     [SerializeField] private GameObject ChooseHoldPanel;
     [SerializeField] private List<RectTransform> holdPanels = new List<RectTransform>();
     [SerializeField] private TextMeshProUGUI chooseHoldText;
@@ -35,6 +36,11 @@ public class CombatUIScript : NetworkBehaviour
     private PlayerGameScript winnerPlayer = null;
     private PlayerGameScript loserPlayer = null;
     private int chosenHoldIndex = -1;
+
+    // Resource loading UI variables
+    private int _loadResourceAmount = -1;
+    private GameManager.TokenType _loadResourceType = GameManager.TokenType.None;
+    bool _loadingResources = false;
 
     bool attackerTurn = true;
     bool isAttacker = false;
@@ -381,7 +387,10 @@ public class CombatUIScript : NetworkBehaviour
     }
 
     public void ChooseHoldOnClick(int chosenHoldIndex) {
-        if (this.chosenHoldIndex == -1) {
+        if (_loadingResources) {
+            OnButtonLoadResourceIntoHold(chosenHoldIndex);
+        }
+        else if (this.chosenHoldIndex == -1) {
             this.chosenHoldIndex = chosenHoldIndex;
             chooseHoldText.text = "Place resources from hold " + (chosenHoldIndex + 1) + " into one of your holds";
             DisplayOwnHolds();
@@ -410,6 +419,7 @@ public class CombatUIScript : NetworkBehaviour
             winnerPlayer = null;
             loserPlayer = null;
             GameManager.instance.HoldUI.GetComponent<Canvas>().sortingOrder = 0;
+
             GameManager.instance.OnWinnerChoiceCompleteRpc();
         }
     }
@@ -504,5 +514,38 @@ public class CombatUIScript : NetworkBehaviour
             Button holdButton = holdPanels[i].GetComponentInChildren<Button>();
             holdButton.interactable = hold.amount > 0;
         }
+    }
+
+    // used for loading resources into holds, not stealing
+    public void DisplayHoldLoadingPanel(List<PlayerGameScript.Hold> holds, GameManager.TokenType tokenType, int amount, PlayerGameScript winnerPlayer) {
+        Debug.Log("Hello from display hold loading panel");
+        ChooseHoldPanel.SetActive(true);
+        DisplayHolds(holds);
+
+        chooseHoldText.text = "Place " + amount + " " + tokenType.ToString() + " into one of your holds";
+        _loadResourceAmount = amount;
+        _loadResourceType = tokenType;
+        this.winnerPlayer = winnerPlayer; // reusing the winner player variable for loading resources
+        _loadingResources = true;
+
+        bool allHoldsFull = holds.TrueForAll(hold => hold.amount > 0);
+        // TODO - DUJE: add check for if all holds hold the same resource type, then the player can't choose (soft lock)
+        for (int i = 0; i < 5; i++) {
+            Button holdButton = holdPanels[i].GetComponentInChildren<Button>();
+            holdButton.interactable = allHoldsFull ? holds[i].tokenType != tokenType : holds[i].amount == 0;
+        }
+    }
+
+    public void OnButtonLoadResourceIntoHold(int holdIndex) {
+        // reset choose hold panel state
+        chooseHoldText.text = "Choose a Hold to Steal from";
+        Debug.Log("Loading " + _loadResourceAmount + " " + _loadResourceType + " into hold " + holdIndex);
+
+        GameManager.instance.UpdatePlayerHoldsServerRpc(winnerPlayer.player_index.Value, _loadResourceType, _loadResourceAmount, holdIndex);
+        _loadResourceAmount = -1;
+        _loadResourceType = GameManager.TokenType.None;
+        winnerPlayer = null;
+        _loadingResources = false;
+        ChooseHoldPanel.SetActive(false);
     }
 }
