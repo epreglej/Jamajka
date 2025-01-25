@@ -827,9 +827,10 @@ public class GameManager : NetworkBehaviour
             }
 
             Debug.Log("Taxing player " + player_on_turn.Value + " for " + taxAmount + " " + taxType + " from hold " + maxIndex + " (shortage)");
-            UpdatePlayerHoldsServerRpc(player_on_turn.Value, taxType, playerHolds[maxIndex].amount - taxAmount, maxIndex);
+            
+            if (maxIndex != -1) UpdatePlayerHoldsServerRpc(player_on_turn.Value, taxType, playerHolds[maxIndex].amount - taxAmount, maxIndex);
 
-            await ThrowCombatDice();
+            int dice_value = COMBAT_DICE_VALUES[Random.Range(0, 5)];
 
             // move the player back based on dice result
             // 2 or 4 = move to port (coins) square
@@ -839,11 +840,11 @@ public class GameManager : NetworkBehaviour
             int square = SquareManager.instance.GetPlayerSquareID(player_on_turn.Value);
             int move_ammount = 0;
 
-            if (attacker_combat_dice.Value == 2 || attacker_combat_dice.Value == 4) move_ammount = -1 * SquareManager.instance.FindPreviousSquareType(square, SquareType.Port);
-            else if (attacker_combat_dice.Value == 6 || attacker_combat_dice.Value == 8) move_ammount = -1 * SquareManager.instance.FindPreviousSquareType(square, SquareType.Sea);
-            else if (attacker_combat_dice.Value == 10) move_ammount = -1 * SquareManager.instance.FindPreviousSquareType(square, SquareType.PirateLair);
+            if (dice_value == 2 || dice_value == 4) move_ammount = -1 * SquareManager.instance.FindPreviousSquareType(square, SquareType.Port);
+            else if (dice_value == 6 || dice_value == 8) move_ammount = -1 * SquareManager.instance.FindPreviousSquareType(square, SquareType.Sea);
+            else if (dice_value == 10) move_ammount = -1 * SquareManager.instance.FindPreviousSquareType(square, SquareType.PirateLair);
 
-            if (attacker_combat_dice.Value != STAR_COMBAT_VALUE)
+            if (dice_value != STAR_COMBAT_VALUE)
             {
                 PlayerMovement movementComponent = players[player_on_turn.Value].GetComponent<PlayerMovement>();
                 movementComponent.MoveXSquares(move_ammount);
@@ -852,7 +853,7 @@ public class GameManager : NetworkBehaviour
 
                 EndOfPlayerMovement(false, dayAction);
             }
-        }
+        }   
 
         if (dayAction) PlayerAction1EndedServerRPC();
         else PlayerAction2EndedServerRPC();
