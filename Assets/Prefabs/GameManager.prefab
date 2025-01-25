@@ -45,7 +45,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 1829232458
+  GlobalObjectIdHash: 4199268467
   InScenePlacedSourceGlobalObjectIdHash: 1070242380
   DeferredDespawnTick: 0
   Ownership: 1
@@ -72,6 +72,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
   playerPrefab: {fileID: 7990005419475245688, guid: 4f9a4d8bede5cb8459c51254fe24ae34, type: 3}
+  mainMenuUIScript: {fileID: 0}
+  players: []
   captain_player:
     m_InternalValue: 0
   player_on_turn:
@@ -82,8 +84,20 @@ MonoBehaviour:
     m_InternalValue: 0
   combat_dice_value:
     m_InternalValue: 0
+  attacker_combat_dice:
+    m_InternalValue: 0
+  attacker_cannon_tokens:
+    m_InternalValue: 0
+  defender_combat_dice:
+    m_InternalValue: 0
+  defender_cannon_tokens:
+    m_InternalValue: 0
   playerReachedEndSquare: 0
+  playerBattleActive: 0
   DiceUI: {fileID: 0}
   CombatUI: {fileID: 0}
   ActionCardUI: {fileID: 0}
+  currentPlayedCard:
+    m_InternalValue:
+      cardID: 
   state: 0

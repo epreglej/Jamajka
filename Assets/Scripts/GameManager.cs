@@ -54,7 +54,7 @@ public class GameManager : NetworkBehaviour
 
     public enum TreasureCard
     {
-        Treasure, MorgansMap, SaransSaber, LadyBeth, AdditionHoldSpace
+        Plus7, Plus5, Plus3, Minus4, Minus3, Minus2, MorgansMap, SaransSaber, LadyBeth, AdditionHoldSpace, None
     }
 
     public enum TokenType
@@ -73,10 +73,9 @@ public class GameManager : NetworkBehaviour
         Start, ChooseCards, PlayerTurn, End
     }
 
-    // TODO: BOARD - koristiti ovo pls
     public enum SquareType
     {
-        PirateLair, Sea, Port
+        PirateLair, Sea, Port, None
     }
 
     [System.Serializable]
@@ -91,7 +90,7 @@ public class GameManager : NetworkBehaviour
     }
 
     public Dictionary<string, ActionCard> actionCardLookup = new Dictionary<string, ActionCard>();
-    
+    public List<TreasureCard> startingTreasureCards = new List<TreasureCard>();
     public NetworkVariable<ActionCardData> currentPlayedCard = new NetworkVariable<ActionCardData>();
 
 
@@ -122,7 +121,20 @@ public class GameManager : NetworkBehaviour
         {
             actionCardLookup[card.cardID] = card;
         }
+
         Debug.Log("Loaded " + allCards.Length + " action cards");
+
+        startingTreasureCards.Add(TreasureCard.Plus7);
+        startingTreasureCards.Add(TreasureCard.Plus7);
+        startingTreasureCards.Add(TreasureCard.Plus5);
+        startingTreasureCards.Add(TreasureCard.Plus3);
+        startingTreasureCards.Add(TreasureCard.Minus4);
+        startingTreasureCards.Add(TreasureCard.Minus3);
+        startingTreasureCards.Add(TreasureCard.Minus2);
+        startingTreasureCards.Add(TreasureCard.SaransSaber);
+        startingTreasureCards.Add(TreasureCard.LadyBeth);
+        startingTreasureCards.Add(TreasureCard.AdditionHoldSpace);
+        startingTreasureCards.Add(TreasureCard.MorgansMap);
     }
 
     private void Update()
@@ -173,12 +185,20 @@ public class GameManager : NetworkBehaviour
             player.AddInitialResources();
         }
 
-        // TODO - BOARD set special cards on pirate lairs (9 random card)
+        Shuffle(startingTreasureCards);
+
+        int i = 0;
+        foreach(Square sq in SquareManager.instance.squares)
+        {
+            if(sq.type == SquareType.PirateLair)
+            {
+                sq.SetTreasureCard(startingTreasureCards[i]);
+                i++;
+            }
+        }
 
         player_on_turn.Value = captain_player.Value;
 
-        // TODO - BOARD - ako hocete neku animaciju dodat al doubt
-        // start some coroutine that calls:
         BoardSetupPhaseOver();
     }
 
@@ -328,8 +348,10 @@ public class GameManager : NetworkBehaviour
     #region Battle
     bool CheckBattleConditions()
     {
-        // TODO - BOARD if any players on the player square
-        return true;
+        int square_id = SquareManager.instance.GetPlayerSquareID(player_on_turn.Value);
+        List<int> opponent_indices = SquareManager.instance.GetPlayerIndicesFromSquareWithId(square_id);
+        if (opponent_indices == null || square_id == 0) return false;
+        return opponent_indices.Count > 1;
     }
 
     async void StartBattlePhase()
@@ -352,22 +374,19 @@ public class GameManager : NetworkBehaviour
         CloseBattleUIClientRpc();
     }
 
-    // TODO - BOARD
     List<int> GetPlayersOnBattleSquare()
     {
         List<int> result = new List<int>();
-
+        
         // get the square in question
-        for (int i = 0; i < players.Count; i++)
+        int square_id = SquareManager.instance.GetPlayerSquareID(player_on_turn.Value);
+        List<int> opponent_indices = SquareManager.instance.GetPlayerIndicesFromSquareWithId(square_id);
+
+        foreach(int i in opponent_indices)
         {
             if (i == player_on_turn.Value) continue;
 
             result.Add(i);
-
-            //if (players[i].IsOnSquare())
-            //{
-            //    result.Add(i);
-            //}
         }
 
         return result;
@@ -631,7 +650,7 @@ public class GameManager : NetworkBehaviour
     }
 
 
-    public void ExecutePlayerAction(bool useDayOption = true)
+    async public void ExecutePlayerAction(bool useDayOption = true)
     {
         // read the player card
         Debug.Log(currentPlayedCard.Value.cardID);
@@ -644,12 +663,17 @@ public class GameManager : NetworkBehaviour
         ActionCardOption card_action2 = playedCard.rightOption;
 
         ActionCardOption cardOption = useDayOption ? card_action1 : card_action2;
+        int ammount = useDayOption ? day_dice_value.Value : night_dice_value.Value;
 
         if (cardOption == ActionCardOption.MoveForward || cardOption == ActionCardOption.MoveBackward)
         {
-            // TODO: BOARD - move player 
-            // move for day_dice_value.Value
-            
+            if (cardOption == ActionCardOption.MoveBackward) ammount *= -1;
+            PlayerMovement movementComponent = players[player_on_turn.Value].GetComponent<PlayerMovement>();
+            Debug.Log("Move for " + ammount);
+            movementComponent.MoveXSquares(ammount);
+
+            while (movementComponent.isMoving) await Task.Delay(1500);
+
             EndOfPlayerMovement(true, useDayOption);
         }
         else
@@ -660,7 +684,6 @@ public class GameManager : NetworkBehaviour
         }
     }
     #endregion
-
 
     async void EndOfPlayerMovement(bool mustPay = true, bool dayAction = true)
     {
@@ -677,16 +700,43 @@ public class GameManager : NetworkBehaviour
             EndBattlePhase();
             Debug.Log("End Of Battle");
             await Task.Delay(1000);
-        }
-
-        if (!mustPay || GetPlayerSquareType() == SquareType.PirateLair)
+        }else
         {
-            if(GetPlayerSquareType() == SquareType.PirateLair)
+            Debug.Log("No battle");
+        }
+        SquareType player_square_type = SquareManager.instance.GetPlayerSquareType(player_on_turn.Value);
+        PlayerGameScript player_gamescript = players[player_on_turn.Value].GetComponent<PlayerGameScript>();
+        if (!mustPay || player_square_type == SquareType.PirateLair)
+        {
+            if(player_square_type == SquareType.PirateLair)
             {
-                // TODO: BOARD - give player the special card if there
+                Square playerSq = SquareManager.instance.GetPlayerSquare(player_on_turn.Value);
+                TreasureCard tr_card = playerSq.GetTreasureCard();
+                if(tr_card != TreasureCard.None)
+                {
+                    if(tr_card == TreasureCard.MorgansMap)
+                    {
+                        player_gamescript.GetTreasureMorgansMapRpc();
+                    }
+                    else if(tr_card == TreasureCard.LadyBeth)
+                    {
+                        player_gamescript.GetTreasureLadyBethRpc();
+                    }
+                    else if(tr_card == TreasureCard.AdditionHoldSpace)
+                    {
+                        player_gamescript.GetTreasureAdditionalHoldRpc();
+                    }
+                    else if (tr_card == TreasureCard.SaransSaber)
+                    {
+                        player_gamescript.GetTreasureSaransSaberRpc();
+                    }
+                    else
+                    {
+                        player_gamescript.GetTreasurePointsRpc(((int)tr_card));
+                    }
+                }
             }
             
-            // TODO : this should be called in a function that ends some animation of player turn end
             if (dayAction) PlayerAction1EndedServerRPC();
             else PlayerAction2EndedServerRPC();
         }
@@ -717,22 +767,31 @@ public class GameManager : NetworkBehaviour
 
             await ThrowCombatDice();
 
-
-            // TODO - BOARD
             // move the player back based on dice result
-
             // 2 or 4 = move to port (coins) square
             // 6 or 8 = move to sea (food) square
             // 10 = move back to pirate lair
             // star = stay put
+            int square = SquareManager.instance.GetPlayerSquareID(player_on_turn.Value);
+            int move_ammount = 0;
+
+            if (attacker_combat_dice.Value == 2 || attacker_combat_dice.Value == 4) move_ammount = -1 * SquareManager.instance.FindPreviousSquareType(square, SquareType.Port);
+            else if (attacker_combat_dice.Value == 6 || attacker_combat_dice.Value == 8) move_ammount = -1 * SquareManager.instance.FindPreviousSquareType(square, SquareType.Sea);
+            else if (attacker_combat_dice.Value == 10) move_ammount = -1 * SquareManager.instance.FindPreviousSquareType(square, SquareType.PirateLair);
 
             if (attacker_combat_dice.Value != STAR_COMBAT_VALUE)
             {
-                // TODO: move the player back
+                PlayerMovement movementComponent = players[player_on_turn.Value].GetComponent<PlayerMovement>();
+                movementComponent.MoveXSquares(move_ammount);
+
+                while (movementComponent.isMoving) await Task.Delay(1000);
 
                 EndOfPlayerMovement(false, dayAction);
             }
         }
+
+        if (dayAction) PlayerAction1EndedServerRPC();
+        else PlayerAction2EndedServerRPC();
     }
 
 
@@ -751,27 +810,26 @@ public class GameManager : NetworkBehaviour
         return null;
     }
 
-    // TODO : BOARD - ovo bi trebal bit serverRpc ili trebaju svi klijenti updateat svoj player objekt za sve playere
-    SquareType GetPlayerSquareType()
-    {
-        //TODO return what player is on
-        // player_on_turn.Value
-        return SquareType.PirateLair;
-    }
 
     [Rpc(SendTo.Server)]
-    public void AddPlayerServerRPC(ulong playerNetworkObjectId)
+    public void AddPlayerServerRpc(ulong playerNetworkObjectId)
     {
         NetworkObject playerNetworkObject = NetworkManager.Singleton.SpawnManager.SpawnedObjects[playerNetworkObjectId];
         PlayerGameScript player = playerNetworkObject.gameObject.GetComponent<PlayerGameScript>();
 
         players.Add(player);
-        usernames.Add(player.username);
+        // usernames.Add(player.username);
 
         player.player_index.Value = players.Count - 1;
-
-        // UpdatePlayerListUIClientRpc();
     }
+
+
+    [Rpc(SendTo.Server)]
+    public void AddPlayerUsernameServerRpc(string username)
+    {
+        usernames.Add(username);
+    }
+
 
     [ClientRpc]
     public void UpdatePlayerListUIClientRpc()
@@ -795,13 +853,17 @@ public class GameManager : NetworkBehaviour
         players_called_ready++;
     }
 
-    // TODO : maybe remove, maybe usefull at some point
-    [Rpc(SendTo.Server)]
-    public void PlayerEndedTurnServerRpc(int player)
+    private void Shuffle(List<TreasureCard> list)
     {
-        if (player == player_on_turn.Value)
+        System.Random rng = new System.Random();
+        int n = list.Count;
+        while (n > 1)
         {
-            playerCalledTurnOver = true;
+            n--;
+            int k = rng.Next(n + 1);
+            TreasureCard value = list[k];
+            list[k] = list[n];
+            list[n] = value;
         }
     }
     #endregion

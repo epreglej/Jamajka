@@ -7,8 +7,10 @@ using Unity.Collections;
 
 public class PlayerGameScript : NetworkBehaviour
 {
-    public string username = string.Empty;
+    // public NetworkVariable<FixedString32Bytes> username = new NetworkVariable<FixedString32Bytes>();
+    // public string username = string.Empty;
     public NetworkVariable<int> player_index = new NetworkVariable<int>(-1);
+    public NetworkVariable<int> currentSquareID = new NetworkVariable<int>(0);
 
     // card options
     GameManager.ActionCardOption cardOption1 = GameManager.ActionCardOption.None;
@@ -33,22 +35,18 @@ public class PlayerGameScript : NetworkBehaviour
     private HoldUIScript holdUI;
 
 
-    // action cards
+    // treasure cards
     public bool hasMorgansMap = false; // draw 2 cards treasure card
     public bool hasSaransSaber = false; // rerol combat dice
     public bool hasLadyBeth = false; // +2 in combat
     public bool has6thHold = false; // 6. hold spot, we ignore this for now
+    public List<GameManager.TreasureCard> point_treasure_cards = new List<GameManager.TreasureCard>();
 
     [System.Serializable]
     public struct Hold
     {
         public GameManager.TokenType tokenType;
         public int amount;
-    }
-
-    public void Awake()
-    {
-        username = "Player" + Random.Range(1,1000);
     }
 
     public override void OnNetworkSpawn()
@@ -70,12 +68,19 @@ public class PlayerGameScript : NetworkBehaviour
     {
         if (IsOwner)
         {
+            
             ulong playerNetworkObjectId = GetComponent<NetworkObject>().NetworkObjectId;
-            GameManager.instance.AddPlayerServerRPC(playerNetworkObjectId);
+            GameManager.instance.AddPlayerServerRpc(playerNetworkObjectId);
+
+            //string username = "Player" + Random.Range(1, 1000);
+            GameManager.instance.AddPlayerUsernameServerRpc("Player" + Random.Range(1, 1000));
+
+            SquareManager.instance.squares[0].AddPlayerIndexToSquareClientRpc(player_index.Value);
         }
 
         holdUI = GameManager.instance.HoldUI;
     }
+    
     
     // Osigurava da svaki player ima listu drugih na istom indexu
     [Rpc(SendTo.NotServer, RequireOwnership = false)]
@@ -89,6 +94,8 @@ public class PlayerGameScript : NetworkBehaviour
             Debug.LogError("WHATAFAK, PlayerGameScript");
         }
     }
+    
+    
 
     // Lokalno postavljanje playera
     async void SetupListOnClient(int index)
@@ -336,6 +343,36 @@ public class PlayerGameScript : NetworkBehaviour
     public void OpenOpponentChoiceClientRpc(int[] players)
     {
         GameManager.instance.CombatUI.GetComponent<CombatUIScript>().OpenOpponentChoice(players);
+    }
+
+    [Rpc(SendTo.Everyone, RequireOwnership = false)]
+    public void GetTreasureSaransSaberRpc()
+    {
+        hasSaransSaber = true;
+    }
+
+    [Rpc(SendTo.Everyone, RequireOwnership = false)]
+    public void GetTreasureMorgansMapRpc()
+    {
+        hasMorgansMap = true;
+    }
+
+    [Rpc(SendTo.Everyone, RequireOwnership = false)]
+    public void GetTreasureLadyBethRpc()
+    {
+        hasLadyBeth = true;
+    }
+
+    [Rpc(SendTo.Everyone, RequireOwnership = false)]
+    public void GetTreasureAdditionalHoldRpc()
+    {
+        has6thHold = true;
+    }
+
+    [Rpc(SendTo.Everyone, RequireOwnership = false)]
+    public void GetTreasurePointsRpc(int treasureType)
+    {
+        point_treasure_cards.Add(((GameManager.TreasureCard)treasureType));
     }
 
     [Rpc(SendTo.Owner)]
