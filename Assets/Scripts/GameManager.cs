@@ -788,12 +788,13 @@ public class GameManager : NetworkBehaviour
                 taxType = TokenType.Food;
                 break;
             default:
-                taxType = TokenType.None;
+                taxType = TokenType.None; // shouldn't happen, but just in case
                 break;
         }
 
         //TODO - DUJE player has the needed resources
-        if (playerHolds.Any<PlayerGameScript.Hold>(hold => hold.tokenType == taxType && hold.amount >= taxAmount)) 
+        if (taxType != TokenType.None && 
+            playerHolds.Any<PlayerGameScript.Hold>(hold => hold.tokenType == taxType && hold.amount >= taxAmount)) 
         {
             //TODO - DUJE remove the player resources
             // eventually add UI for picking which hold to pay from
@@ -811,7 +812,7 @@ public class GameManager : NetworkBehaviour
             Debug.Log("Taxing player " + player_on_turn.Value + " for " + taxAmount + " " + taxType + " from hold " + minIndex);
             UpdatePlayerHoldsServerRpc(player_on_turn.Value, taxType, playerHolds[minIndex].amount - taxAmount, minIndex);
         }
-        else
+        else if (taxType != TokenType.None)
         {
             // TODO - DUJE remove the amount of the resources that the player has
             int maxAmount = 0; // prioritize the hold with the most amount
