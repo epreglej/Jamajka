@@ -4,6 +4,7 @@ using Unity.Netcode;
 using System.Threading.Tasks;
 using System.Threading;
 using Unity.Collections;
+using System.Linq;
 
 public class GameManager : NetworkBehaviour
 {
@@ -774,13 +775,58 @@ public class GameManager : NetworkBehaviour
 
     async void TryTaxPlayer(bool dayAction)
     {
-        if (true) //TODO - DUJE player has the needed resources
+        List<PlayerGameScript.Hold> playerHolds = players[player_on_turn.Value].holds;
+        Square playerSquare = SquareManager.instance.GetPlayerSquare(player_on_turn.Value);
+        int taxAmount = playerSquare.resourceValue;
+        TokenType taxType;
+        switch (playerSquare.type)
+        {
+            case SquareType.Port:
+                taxType = TokenType.Gold;
+                break;
+            case SquareType.Sea:
+                taxType = TokenType.Food;
+                break;
+            default:
+                taxType = TokenType.None;
+                break;
+        }
+
+        //TODO - DUJE player has the needed resources
+        if (playerHolds.Any<PlayerGameScript.Hold>(hold => hold.tokenType == taxType && hold.amount >= taxAmount)) 
         {
             //TODO - DUJE remove the player resources
+            // eventually add UI for picking which hold to pay from
+            int minAmount = 9999; // prioritize the hold with the least amount
+            int minIndex = -1;
+            for (int i = 0; i < 5; i++)
+            {
+                if (playerHolds[i].tokenType == taxType && playerHolds[i].amount >= taxAmount && playerHolds[i].amount < minAmount)
+                {
+                    minAmount = playerHolds[i].amount;
+                    minIndex = i;
+                }
+            }
+
+            Debug.Log("Taxing player " + player_on_turn.Value + " for " + taxAmount + " " + taxType + " from hold " + minIndex);
+            UpdatePlayerHoldsServerRpc(player_on_turn.Value, taxType, playerHolds[minIndex].amount - taxAmount, minIndex);
         }
         else
         {
             // TODO - DUJE remove the amount of the resources that the player has
+            int maxAmount = 0; // prioritize the hold with the most amount
+            int maxIndex = -1;
+            for (int i = 0; i < 5; i++)
+            {
+                if (playerHolds[i].tokenType == taxType && playerHolds[i].amount > maxAmount)
+                {
+                    maxAmount = playerHolds[i].amount;
+                    maxIndex = i;
+                }
+            }
+
+            Debug.Log("Taxing player " + player_on_turn.Value + " for " + taxAmount + " " + taxType + " from hold " + maxIndex + " (shortage)");
+            UpdatePlayerHoldsServerRpc(player_on_turn.Value, taxType, playerHolds[maxIndex].amount - taxAmount, maxIndex);
 
             await ThrowCombatDice();
 

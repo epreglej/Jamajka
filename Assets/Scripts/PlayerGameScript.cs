@@ -389,6 +389,12 @@ public class PlayerGameScript : NetworkBehaviour
     [Rpc(SendTo.Everyone)]
     public void UpdatePlayerHoldsClientRpc(GameManager.TokenType type, int amount, int holdIndex)
     {
+        if (amount <= 0) {
+            // handle negative amounts from removing resources
+            type = GameManager.TokenType.None;
+            amount = 0;
+        }
+        
         Hold h = holds[holdIndex];
         h.tokenType = type;
         h.amount = amount;
@@ -451,7 +457,6 @@ public class PlayerGameScript : NetworkBehaviour
     [Rpc(SendTo.Owner)]
     public void OpenHoldLoadingClientRpc(GameManager.TokenType token, int amount, bool dayAction)
     {
-        Debug.Log("Hello from OpenHoldLoadingClientRpc");
         GameManager.instance.CombatUI.GetComponent<CombatUIScript>().DisplayHoldLoadingPanel(holds, token, amount, this, dayAction);
     }
 }
