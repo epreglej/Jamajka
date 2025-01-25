@@ -566,8 +566,7 @@ public class GameManager : NetworkBehaviour
              *  3) give looser a cursed own action card -- ignore  
              */
 
-            // TODO - DUJE: implement choice, default is stealing for now
-            // also verify if this runs exclusively on server
+
             players[winner].OpenVictoryChoiceClientRPC(winner, loser);
 
             await WaitForWinnerChoice();
@@ -748,7 +747,6 @@ public class GameManager : NetworkBehaviour
 
     void LoadResourceToPlayerHold(ActionCardOption cardOption, bool dayAction = true)
     {
-        // TODO - DUJE: fix night action overriding day action when both are on card
         int amount = dayAction ? day_dice_value.Value : night_dice_value.Value;
         TokenType tokenType = TokenType.None;
         

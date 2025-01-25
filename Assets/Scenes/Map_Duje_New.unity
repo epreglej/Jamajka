@@ -4193,6 +4193,10 @@ PrefabInstance:
       propertyPath: GlobalObjectIdHash
       value: 620635534
       objectReference: {fileID: 0}
+    - target: {fileID: 5315336002404167090, guid: 3eb366214488c9c4082939becc2f0846, type: 3}
+      propertyPath: _backButton
+      value: 
+      objectReference: {fileID: 512204680}
     - target: {fileID: 5891549881421059453, guid: 3eb366214488c9c4082939becc2f0846, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.size
       value: 1
@@ -5501,6 +5505,17 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 433856, guid: 04e5ad3b4d0e23842a04b203a7ef5e46, type: 3}
   m_PrefabInstance: {fileID: 509624214}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &512204680 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6012408997270386353, guid: 3eb366214488c9c4082939becc2f0846, type: 3}
+  m_PrefabInstance: {fileID: 398676905}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &520162745
 PrefabInstance:
   m_ObjectHideFlags: 0

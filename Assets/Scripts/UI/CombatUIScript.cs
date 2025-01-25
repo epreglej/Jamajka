@@ -33,6 +33,7 @@ public class CombatUIScript : NetworkBehaviour
     [SerializeField] private TextMeshProUGUI chooseHoldText;
     [SerializeField] private GameObject VictoryChoicePanel;
     [SerializeField] private GameObject ChooseTreasureCardPanel;
+    [SerializeField] private Button _backButton;
     private PlayerGameScript winnerPlayer = null;
     private PlayerGameScript loserPlayer = null;
     private int chosenHoldIndex = -1;
@@ -530,6 +531,7 @@ public class CombatUIScript : NetworkBehaviour
         this.winnerPlayer = winnerPlayer; // reusing the winner player variable for loading resources
         _loadingResources = true;
         _dayAction = dayAction;
+        _backButton.interactable = false;
 
         bool allHoldsFull = holds.TrueForAll(hold => hold.amount > 0);
         // TODO - DUJE: add check for if all holds hold the same resource type, then the player can't choose (soft lock)
@@ -549,6 +551,7 @@ public class CombatUIScript : NetworkBehaviour
         _loadResourceType = GameManager.TokenType.None;
         winnerPlayer = null;
         _loadingResources = false;
+        _backButton.interactable = true;
         ChooseHoldPanel.SetActive(false);
 
         if (_dayAction) {
