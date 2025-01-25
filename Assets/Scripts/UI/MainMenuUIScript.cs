@@ -15,6 +15,8 @@ public class MainMenuUIScript : MonoBehaviour
     public GameObject playButtonGameObject;
     public GameObject playerListGameObject;
 
+    public GameObject startGameButton;
+
     public TMP_Text player1Label;
     public TMP_Text player2Label;
     public TMP_Text player3Label;
@@ -32,6 +34,7 @@ public class MainMenuUIScript : MonoBehaviour
 
     private void Start()
     {
+        startGameButton.SetActive(false);
         InvokeRepeating("UpdatePlayerListUI", 0f, 1f);
     }
 
@@ -80,6 +83,16 @@ public class MainMenuUIScript : MonoBehaviour
         playerListGameObject.SetActive(true);
     }
 
+    public void StartGame()
+    {
+        if (GameManager.instance.StartGame())
+        {
+            playerListGameObject.SetActive(false);
+            startGameButton.SetActive(false);
+        }
+
+    }
+
     private void StartHost()
     {
         if (NetworkManager.Singleton != null)
@@ -91,6 +104,8 @@ public class MainMenuUIScript : MonoBehaviour
         {
             Debug.LogError("No NetworkManager found!");
         }
+
+        startGameButton.SetActive(true);
     }
 
     private void StartClient()

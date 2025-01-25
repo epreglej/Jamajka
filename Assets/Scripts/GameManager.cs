@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using System.Threading;
 using Unity.Collections;
 using System.Linq;
+using UnityEngine.SceneManagement;
 
 public class GameManager : NetworkBehaviour
 {
@@ -46,6 +47,7 @@ public class GameManager : NetworkBehaviour
     public Canvas CombatUI;
     public Canvas ActionCardUI;
     public HoldUIScript HoldUI;
+    public EndGameScreenUI EndScreenScript;
 
     // Za rollanje Combat kocke - samo random index na listu
     public static List<int> COMBAT_DICE_VALUES = new List<int>{2, 4, 6, 8, STAR_COMBAT_VALUE};
@@ -138,23 +140,14 @@ public class GameManager : NetworkBehaviour
         startingTreasureCards.Add(TreasureCard.MorgansMap);
     }
 
-    private void Update()
+    public bool StartGame()
     {
-        if (!IsServer) return;
+        if (IsServer == false) return false;
 
-        if (Input.GetKeyDown(KeyCode.Space))
-        {
-            Debug.Log("Space");
-            StartGame();
-        }
-    }
-
-    void StartGame()
-    {
         // load players
         if (players.Count < 2)
         {
-            // TODO - BOARD handle error - wrati na meni valjda
+            return false;
         }
         else
         {
@@ -167,15 +160,67 @@ public class GameManager : NetworkBehaviour
 
         // distribute initial resources
         DistributeStartingResources();
+        return true;
     }
 
     void EndGame()
     {
-        // TODO - BOARD
+        int i = 0;
+        foreach(var player in players)
+        {
+            // Gold points
+            int points = player.GetResources(TokenType.Gold);
+            // Treasure points
+            foreach(TreasureCard tr in player.point_treasure_cards)
+            {
+                if (tr == TreasureCard.Plus7) points += 7;
+                if (tr == TreasureCard.Plus5) points += 5;
+                if (tr == TreasureCard.Plus3) points += 3;
+                if (tr == TreasureCard.Minus4) points -= 4;
+                if (tr == TreasureCard.Minus3) points -= 3;
+                if (tr == TreasureCard.Minus2) points -= 2;
+            }
+            // Square points
+            int square = SquareManager.instance.GetPlayerSquareID(i);
+            if (square < 6) points += 15;
+            int last_square = SquareManager.instance.lastSquareID;
+            if (square == last_square) points += 10;
+            else if (square == last_square - 1) points += 9;
+            else if (square == last_square - 2) points += 8;
+            else if (square == last_square - 3) points += 7;
+            else if (square == last_square - 4) points += 6;
+            else if (square == last_square - 5) points += 5;
+            else if (square == last_square - 6) points += 4;
+            else if (square == last_square - 7) points += 3;
 
-        // calculate the points
+            if (points < 0) points = 0;
 
-        // display results
+            player.points.Value = points;
+            player.username.Value = usernames[i].ToString();
+
+            i++;
+        }
+        DisplayEndResultsClientRpc();
+    }
+
+    [Rpc(SendTo.Everyone, RequireOwnership = false)]
+    public void DisplayEndResultsClientRpc()
+    {
+        Dictionary<string, int> results = new Dictionary<string, int>();
+        List<string> ordered_usernames = new List<string>();
+        foreach(var player in players)
+        {
+            results.Add(player.username.Value, player.points.Value);
+        }
+
+        var sortedUsers = results.OrderByDescending(pair => pair.Value);
+
+        foreach (var user in sortedUsers)
+        {
+            ordered_usernames.Add(user.Key);
+        }
+
+        EndScreenScript.ShowGameResults(ordered_usernames, results);
     }
 
     void DistributeStartingResources()
@@ -954,5 +999,34 @@ public class GameManager : NetworkBehaviour
         players[loser_index].UpdateTreasureCardRpc(cardIndex, false);
     }
 
+
+    public void PlayerCalledQuitGame()
+    {
+        Application.Quit();
+    }
+
+    public void PlayerCalledRestartGame()
+    {
+        ReturnToLobby();
+    }
+
+    public void ReturnToLobby()
+    {
+        if (IsServer) 
+            ReturnAllToLobbyClientRpc();
+        else 
+            NetworkManager.DisconnectClient(NetworkManager.Singleton.LocalClientId);
+    }
+
+    [Rpc(SendTo.Everyone, RequireOwnership = false)]
+    public void ReturnAllToLobbyClientRpc()
+    {
+        if (IsServer)
+        {
+            NetworkManager.DisconnectClient(NetworkManager.Singleton.LocalClientId);
+            SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        }
+        else ReturnToLobby();
+    }
     #endregion
 }

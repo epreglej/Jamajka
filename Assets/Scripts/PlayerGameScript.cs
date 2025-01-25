@@ -11,6 +11,8 @@ public class PlayerGameScript : NetworkBehaviour
     // public string username = string.Empty;
     public NetworkVariable<int> player_index = new NetworkVariable<int>(-1);
     public NetworkVariable<int> currentSquareID = new NetworkVariable<int>(0);
+    public NetworkVariable<int> points = new NetworkVariable<int>(0);
+    public NetworkVariable<string> username = new NetworkVariable<string>("");
 
     // card options
     GameManager.ActionCardOption cardOption1 = GameManager.ActionCardOption.None;

@@ -10,7 +10,7 @@ public class SquareManager : NetworkBehaviour
     public List<Square> squares = new List<Square>();
 
     private int firstSquareID;
-    private int lastSquareID;
+    public int lastSquareID;
 
 
     public override void OnNetworkSpawn()
