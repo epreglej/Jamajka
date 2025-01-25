@@ -121,9 +121,10 @@ MonoBehaviour:
   - {fileID: 1952946271030947497}
   - {fileID: 1357836113789386415}
   - {fileID: 6026480614999240242}
-  _foodTokenSprite: {fileID: 21300000, guid: e4595df50f5db69448dc8ee90b8e0903, type: 2}
-  _goldTokenSprite: {fileID: 21300000, guid: c97fe5b2825bb774089b3d8e3f8f8dab, type: 2}
-  _cannonTokenSprite: {fileID: 21300000, guid: 060273e2b9fd92f4aaf2e442b444de66, type: 2}
+  _foodTokenSprite: {fileID: -1645824714, guid: 774e1bd52b1d11247978686ae2197d85, type: 3}
+  _goldTokenSprite: {fileID: 266895400, guid: 774e1bd52b1d11247978686ae2197d85, type: 3}
+  _cannonTokenSprite: {fileID: -79173711, guid: 774e1bd52b1d11247978686ae2197d85, type: 3}
+  _slotContainer: {fileID: 5052584221813355238}
 --- !u!1 &1817798536153239228
 GameObject:
   m_ObjectHideFlags: 0

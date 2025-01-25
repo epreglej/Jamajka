@@ -364,6 +364,7 @@ public class CombatUIScript : NetworkBehaviour
         loserPlayer = GameManager.instance.players[loser];
 
         VictoryChoicePanel.SetActive(true);
+        GameManager.instance.HoldUI.GetComponent<Canvas>().sortingOrder = 1;
     }
 
     private void DisplayChooseHoldPanel(int winner, int loser) {
@@ -384,6 +385,7 @@ public class CombatUIScript : NetworkBehaviour
             this.chosenHoldIndex = chosenHoldIndex;
             chooseHoldText.text = "Place resources from hold " + (chosenHoldIndex + 1) + " into one of your holds";
             DisplayOwnHolds();
+            GameManager.instance.HoldUI.GetComponent<Canvas>().sortingOrder = 0;
         } else {
             // swap resources
             PlayerGameScript.Hold winnerHold = winnerPlayer.holds[chosenHoldIndex];
@@ -407,6 +409,7 @@ public class CombatUIScript : NetworkBehaviour
             this.chosenHoldIndex = -1;
             winnerPlayer = null;
             loserPlayer = null;
+            GameManager.instance.HoldUI.GetComponent<Canvas>().sortingOrder = 0;
             GameManager.instance.OnWinnerChoiceCompleteRpc();
         }
     }
@@ -477,6 +480,7 @@ public class CombatUIScript : NetworkBehaviour
         ChooseTreasureCardPanel.SetActive(false);
         winnerPlayer = null;
         loserPlayer = null;
+        GameManager.instance.HoldUI.GetComponent<Canvas>().sortingOrder = 0;
         GameManager.instance.OnWinnerChoiceCompleteRpc();
     }
 
@@ -485,6 +489,7 @@ public class CombatUIScript : NetworkBehaviour
         ChooseTreasureCardPanel.SetActive(false);
         ChooseHoldPanel.SetActive(false);
         VictoryChoicePanel.SetActive(true);
+        GameManager.instance.HoldUI.GetComponent<Canvas>().sortingOrder = 1;
     }
 
     private void DisplayHolds(List<PlayerGameScript.Hold> holds) {
