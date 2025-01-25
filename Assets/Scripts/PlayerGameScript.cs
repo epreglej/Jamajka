@@ -32,6 +32,8 @@ public class PlayerGameScript : NetworkBehaviour
     private GameManager.TokenType replaceHold_token;
     private int replaceHold_amount;
     private int replaceHold_index = -1;
+    private HoldUIScript holdUI;
+
 
     // treasure cards
     public bool hasMorgansMap = false; // draw 2 cards treasure card
@@ -40,6 +42,7 @@ public class PlayerGameScript : NetworkBehaviour
     public bool has6thHold = false; // 6. hold spot, we ignore this for now
     public List<GameManager.TreasureCard> point_treasure_cards = new List<GameManager.TreasureCard>();
 
+    [System.Serializable]
     public struct Hold
     {
         public GameManager.TokenType tokenType;
@@ -58,6 +61,7 @@ public class PlayerGameScript : NetworkBehaviour
 
             holds.Add(h);
         }    
+
     }
 
     private void Start()
@@ -73,6 +77,8 @@ public class PlayerGameScript : NetworkBehaviour
 
             SquareManager.instance.squares[0].AddPlayerIndexToSquareClientRpc(player_index.Value);
         }
+
+        holdUI = GameManager.instance.HoldUI;
     }
     
     
@@ -136,14 +142,11 @@ public class PlayerGameScript : NetworkBehaviour
     public void AddInitialResources()
     {
         InitializeDeckClientRpc();
-        Hold hold1 = holds[0];
-        hold1.tokenType = GameManager.TokenType.Food;
-        hold1.amount = 3;
 
-        Hold hold2 = holds[1];
-        hold2.tokenType = GameManager.TokenType.Gold;
-        hold2.amount = 3;
+        UpdatePlayerHoldsClientRpc(GameManager.TokenType.Food, 3, 0);
+        UpdatePlayerHoldsClientRpc(GameManager.TokenType.Gold, 3, 1);
     }
+
 
     // TODO - DUJE - ovo pozivas da bi dodal resurse u hold ( ako ima free space sam doda - treba prikazat, ako nema free space treba zamijenit )
 
@@ -166,6 +169,7 @@ public class PlayerGameScript : NetworkBehaviour
             Hold h = holds[index_of_freeHold];
             h.tokenType = token;
             h.amount = amount;
+            holds[index_of_freeHold] = h;
         }
         else
         {
@@ -198,6 +202,7 @@ public class PlayerGameScript : NetworkBehaviour
         Hold h = holds[replaceHold_index];
         h.tokenType = replaceHold_token;
         h.amount = replaceHold_amount;
+        holds[replaceHold_index] = h;
 
         replaceHold_index = -1;
     }
@@ -368,5 +373,104 @@ public class PlayerGameScript : NetworkBehaviour
     public void GetTreasurePointsRpc(int treasureType)
     {
         point_treasure_cards.Add(((GameManager.TreasureCard)treasureType));
+    }
+
+    [Rpc(SendTo.Owner)]
+    // locally open the victory choice ui
+    public void OpenVictoryChoiceClientRPC(int winner, int loser) {
+        //if (!IsOwner) return;
+        if (player_index.Value != winner) {
+            Debug.Log("OpenVictoryChoiceClientRPC (PlayerGameScript): not winner");
+             return;
+        }
+        GameManager.instance.CombatUI.GetComponent<CombatUIScript>().DisplayVictoryChoice(winner, loser);
+    }
+
+    [Rpc(SendTo.Everyone)]
+    public void UpdatePlayerHoldsClientRpc(GameManager.TokenType type, int amount, int holdIndex)
+    {
+        if (amount <= 0) {
+            // handle negative amounts from removing resources
+            type = GameManager.TokenType.None;
+            amount = 0;
+        }
+        
+        Hold h = holds[holdIndex];
+        h.tokenType = type;
+        h.amount = amount;
+        holds[holdIndex] = h;
+
+        if (IsOwner) {
+            holdUI.UpdateSlot(holdIndex, type, amount);
+        }
+    }
+
+    // NOTE - DUJE: ovo ne treba biti rpc ako se syncaju treasure cardovi, neznam zasto sam ovo radia
+    // , al je nacin eventualno za dobit skrivene treasure cardove koji ne bi bili syncani
+    [Rpc(SendTo.Owner)]
+    public void StealTreasureCardsRpc(int stealerIndex)
+    {
+        bool[] treasureCards = new bool[4];
+        treasureCards[0] = hasMorgansMap;
+        treasureCards[1] = hasSaransSaber;
+        treasureCards[2] = hasLadyBeth;
+        treasureCards[3] = has6thHold;
+
+        Debug.Log("Should be loser, getting stolen from");
+
+        GameManager.instance.players[stealerIndex].HandleStealTreasureCardsRpc(treasureCards);
+    }
+
+    [Rpc(SendTo.Owner)]
+    public void HandleStealTreasureCardsRpc(bool[] treasureCards)
+    {
+        Debug.Log("Should be on winner, stealing treasure cards");
+
+        string debugCards = "Available treasure cards: ";
+        for (int i = 0; i < treasureCards.Length; i++) {
+            debugCards += treasureCards[i] + " ";
+        }
+        Debug.Log(debugCards);
+
+        GameManager.instance.CombatUI.GetComponent<CombatUIScript>().DisplayStealTreasureCardPanel(treasureCards);
+        
+    }
+
+    [Rpc(SendTo.Everyone, RequireOwnership = false)]
+    public void UpdateTreasureCardRpc(int cardIndex, bool hasCard) {
+        switch (cardIndex) {
+            case 1:
+                hasMorgansMap = hasCard;
+                break;
+            case 2:
+                hasSaransSaber = hasCard;
+                break;
+            case 3:
+                hasLadyBeth = hasCard;
+                break;
+            case 4:
+                has6thHold = hasCard;
+                break;
+        }
+    }
+
+    [Rpc(SendTo.Owner)]
+    public void OpenHoldLoadingClientRpc(GameManager.TokenType token, int amount, bool dayAction)
+    {
+        GameManager.instance.CombatUI.GetComponent<CombatUIScript>().DisplayHoldLoadingPanel(holds, token, amount, this, dayAction);
+    }
+
+    public int GetResources(GameManager.TokenType tokenType)
+    {
+        int total = 0;
+        foreach (var hold in holds)
+        {
+            if (hold.tokenType == tokenType)
+            {
+                total += hold.amount;
+            }
+        }
+
+        return total;
     }
 }

@@ -4,6 +4,7 @@ using Unity.Netcode;
 using System.Threading.Tasks;
 using System.Threading;
 using Unity.Collections;
+using System.Linq;
 
 public class GameManager : NetworkBehaviour
 {
@@ -44,9 +45,13 @@ public class GameManager : NetworkBehaviour
     public Canvas DiceUI;
     public Canvas CombatUI;
     public Canvas ActionCardUI;
+    public HoldUIScript HoldUI;
 
     // Za rollanje Combat kocke - samo random index na listu
     public static List<int> COMBAT_DICE_VALUES = new List<int>{2, 4, 6, 8, STAR_COMBAT_VALUE};
+
+    // Čekanje pobjednikovog odabira
+    private bool winnerHasChosen = false;
 
     public enum TreasureCard
     {
@@ -549,6 +554,7 @@ public class GameManager : NetworkBehaviour
         {
             // its a tie
             CombatUI.GetComponent<CombatUIScript>().DisplayWinnerClientRpc(0);
+
         }
         else
         {
@@ -562,11 +568,20 @@ public class GameManager : NetworkBehaviour
              */
 
 
+            players[winner].OpenVictoryChoiceClientRPC(winner, loser);
+
+            await WaitForWinnerChoice();
+
         }
-
         await Task.Delay(5000);
-
         playerBattleActive = false;
+    }
+
+    async private Task WaitForWinnerChoice() {
+        while (!winnerHasChosen) {
+            await Task.Delay(100);
+        }
+        winnerHasChosen = !winnerHasChosen;
     }
 
 
@@ -622,13 +637,13 @@ public class GameManager : NetworkBehaviour
         currentPlayedCard.Value = playedCardData;
     }
 
-    [ServerRpc]
+    [Rpc(SendTo.Server, RequireOwnership = false)]
     public void PlayerAction1EndedServerRPC()
     {
         ExecutePlayerAction(false);
     }
 
-    [ServerRpc]
+    [Rpc(SendTo.Server, RequireOwnership = false)]
     public void PlayerAction2EndedServerRPC()
     {
         EndPlayerTurn();
@@ -733,24 +748,89 @@ public class GameManager : NetworkBehaviour
 
     void LoadResourceToPlayerHold(ActionCardOption cardOption, bool dayAction = true)
     {
-        // TODO - DUJE make a player choose a hold to put resource into
+        int amount = dayAction ? day_dice_value.Value : night_dice_value.Value;
+        TokenType tokenType = TokenType.None;
+        
 
+        switch (cardOption) {
+            case ActionCardOption.LoadGold:
+                tokenType = TokenType.Gold;
+                break;
+            case ActionCardOption.LoadFood:
+                tokenType = TokenType.Food;
+                break;
+            case ActionCardOption.LoadCannon:
+                tokenType = TokenType.Cannon;
+                break;
+        }
 
-        if (dayAction) PlayerAction1EndedServerRPC();
-        else PlayerAction2EndedServerRPC();
+        if (tokenType == TokenType.None) Debug.LogError("Trying to load a token that is not food, gold or cannon");
+        Debug.Log("Loading " + amount + " " + tokenType + " to player " + player_on_turn.Value + " day: " + dayAction);
+
+        players[player_on_turn.Value].OpenHoldLoadingClientRpc(tokenType, amount, dayAction);
+
+        //if (dayAction) PlayerAction1EndedServerRPC(); // find a way to call this after the player has chosen
+        //else PlayerAction2EndedServerRPC();
     }
 
     async void TryTaxPlayer(bool dayAction)
     {
-        if (true) //TODO - DUJE player has the needed resources
+        List<PlayerGameScript.Hold> playerHolds = players[player_on_turn.Value].holds;
+        Square playerSquare = SquareManager.instance.GetPlayerSquare(player_on_turn.Value);
+        int taxAmount = playerSquare.resourceValue;
+        TokenType taxType;
+        switch (playerSquare.type)
+        {
+            case SquareType.Port:
+                taxType = TokenType.Gold;
+                break;
+            case SquareType.Sea:
+                taxType = TokenType.Food;
+                break;
+            default:
+                taxType = TokenType.None; // shouldn't happen, but just in case
+                break;
+        }
+
+        //TODO - DUJE player has the needed resources
+        if (taxType != TokenType.None && 
+            playerHolds.Any<PlayerGameScript.Hold>(hold => hold.tokenType == taxType && hold.amount >= taxAmount)) 
         {
             //TODO - DUJE remove the player resources
+            // eventually add UI for picking which hold to pay from
+            int minAmount = 9999; // prioritize the hold with the least amount
+            int minIndex = -1;
+            for (int i = 0; i < 5; i++)
+            {
+                if (playerHolds[i].tokenType == taxType && playerHolds[i].amount >= taxAmount && playerHolds[i].amount < minAmount)
+                {
+                    minAmount = playerHolds[i].amount;
+                    minIndex = i;
+                }
+            }
+
+            Debug.Log("Taxing player " + player_on_turn.Value + " for " + taxAmount + " " + taxType + " from hold " + minIndex);
+            UpdatePlayerHoldsServerRpc(player_on_turn.Value, taxType, playerHolds[minIndex].amount - taxAmount, minIndex);
         }
-        else
+        else if (taxType != TokenType.None)
         {
             // TODO - DUJE remove the amount of the resources that the player has
+            int maxAmount = 0; // prioritize the hold with the most amount
+            int maxIndex = -1;
+            for (int i = 0; i < 5; i++)
+            {
+                if (playerHolds[i].tokenType == taxType && playerHolds[i].amount > maxAmount)
+                {
+                    maxAmount = playerHolds[i].amount;
+                    maxIndex = i;
+                }
+            }
 
-            await ThrowCombatDice();
+            Debug.Log("Taxing player " + player_on_turn.Value + " for " + taxAmount + " " + taxType + " from hold " + maxIndex + " (shortage)");
+            
+            if (maxIndex != -1) UpdatePlayerHoldsServerRpc(player_on_turn.Value, taxType, playerHolds[maxIndex].amount - taxAmount, maxIndex);
+
+            int dice_value = COMBAT_DICE_VALUES[Random.Range(0, 5)];
 
             // move the player back based on dice result
             // 2 or 4 = move to port (coins) square
@@ -760,11 +840,11 @@ public class GameManager : NetworkBehaviour
             int square = SquareManager.instance.GetPlayerSquareID(player_on_turn.Value);
             int move_ammount = 0;
 
-            if (attacker_combat_dice.Value == 2 || attacker_combat_dice.Value == 4) move_ammount = -1 * SquareManager.instance.FindPreviousSquareType(square, SquareType.Port);
-            else if (attacker_combat_dice.Value == 6 || attacker_combat_dice.Value == 8) move_ammount = -1 * SquareManager.instance.FindPreviousSquareType(square, SquareType.Sea);
-            else if (attacker_combat_dice.Value == 10) move_ammount = -1 * SquareManager.instance.FindPreviousSquareType(square, SquareType.PirateLair);
+            if (dice_value == 2 || dice_value == 4) move_ammount = -1 * SquareManager.instance.FindPreviousSquareType(square, SquareType.Port);
+            else if (dice_value == 6 || dice_value == 8) move_ammount = -1 * SquareManager.instance.FindPreviousSquareType(square, SquareType.Sea);
+            else if (dice_value == 10) move_ammount = -1 * SquareManager.instance.FindPreviousSquareType(square, SquareType.PirateLair);
 
-            if (attacker_combat_dice.Value != STAR_COMBAT_VALUE)
+            if (dice_value != STAR_COMBAT_VALUE)
             {
                 PlayerMovement movementComponent = players[player_on_turn.Value].GetComponent<PlayerMovement>();
                 movementComponent.MoveXSquares(move_ammount);
@@ -773,7 +853,7 @@ public class GameManager : NetworkBehaviour
 
                 EndOfPlayerMovement(false, dayAction);
             }
-        }
+        }   
 
         if (dayAction) PlayerAction1EndedServerRPC();
         else PlayerAction2EndedServerRPC();
@@ -853,5 +933,26 @@ public class GameManager : NetworkBehaviour
     }
     #endregion
 
+    #region Unsorted
 
+    [Rpc(SendTo.Server)]
+    public void UpdatePlayerHoldsServerRpc(int player_index, TokenType type, int amount, int holdIndex)
+    {
+        players[player_index].UpdatePlayerHoldsClientRpc(type, amount, holdIndex);
+    }
+
+    [Rpc(SendTo.Server)]
+    public void OnWinnerChoiceCompleteRpc()
+    {
+        winnerHasChosen = true;
+    }
+
+    [Rpc(SendTo.Server)]
+    public void StealTreasureCardServerRpc(int winner_index, int loser_index, int cardIndex)
+    {
+        players[winner_index].UpdateTreasureCardRpc(cardIndex, true);
+        players[loser_index].UpdateTreasureCardRpc(cardIndex, false);
+    }
+
+    #endregion
 }
