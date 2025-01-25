@@ -379,20 +379,6 @@ public class CombatUIScript : NetworkBehaviour
         VictoryChoicePanel.SetActive(false);
     }
 
-    private void DisplayHolds(List<PlayerGameScript.Hold> holds) {
-        for (int i = 0; i < 5; i++) {
-            TextMeshProUGUI holdText = holdPanels[i].Find("HoldContentsText").GetComponent<TextMeshProUGUI>();
-            PlayerGameScript.Hold hold = holds[i];
-            holdText.text = hold.amount.ToString() + " " + hold.tokenType.ToString();
-            Image holdImage = holdPanels[i].Find("HoldContentsImage").GetComponent<Image>();
-            holdImage.color = hold.amount > 0 ? Color.white : Color.clear;
-            holdImage.sprite = GameManager.instance.HoldUI.GetSprite(hold.tokenType);
-
-            Button holdButton = holdPanels[i].GetComponentInChildren<Button>();
-            holdButton.interactable = hold.amount > 0;
-        }
-    }
-
     public void ChooseHoldOnClick(int chosenHoldIndex) {
         if (this.chosenHoldIndex == -1) {
             this.chosenHoldIndex = chosenHoldIndex;
@@ -501,26 +487,6 @@ public class CombatUIScript : NetworkBehaviour
         VictoryChoicePanel.SetActive(true);
     }
 
-    public void DisplayVictoryChoice(int winner, int loser) {
-        winnerPlayer = GameManager.instance.players[winner];
-        loserPlayer = GameManager.instance.players[loser];
-
-        VictoryChoicePanel.SetActive(true);
-    }
-
-    private void DisplayChooseHoldPanel(int winner, int loser) {
-        loserPlayer = GameManager.instance.players[loser];
-        winnerPlayer = GameManager.instance.players[winner];
-        chooseHoldText.text = "Choose a Hold to Steal from";
-        //Debug.Log("LoserPlayer index: " + loserPlayer.player_index.Value + ", parameter: " + loser);
-        List<PlayerGameScript.Hold> holds = loserPlayer.holds;
-
-        DisplayHolds(holds);
-
-        ChooseHoldPanel.SetActive(true);
-        VictoryChoicePanel.SetActive(false);
-    }
-
     private void DisplayHolds(List<PlayerGameScript.Hold> holds) {
         for (int i = 0; i < 5; i++) {
             TextMeshProUGUI holdText = holdPanels[i].Find("HoldContentsText").GetComponent<TextMeshProUGUI>();
@@ -534,113 +500,4 @@ public class CombatUIScript : NetworkBehaviour
             holdButton.interactable = hold.amount > 0;
         }
     }
-
-    public void ChooseHoldOnClick(int chosenHoldIndex) {
-        if (this.chosenHoldIndex == -1) {
-            this.chosenHoldIndex = chosenHoldIndex;
-            chooseHoldText.text = "Place resources from hold " + (chosenHoldIndex + 1) + " into one of your holds";
-            DisplayOwnHolds();
-        } else {
-            // swap resources
-            PlayerGameScript.Hold winnerHold = winnerPlayer.holds[chosenHoldIndex];
-            PlayerGameScript.Hold loserHold = loserPlayer.holds[this.chosenHoldIndex];
-
-            // TODO - DUJE: add logic for checking if the swap is valid (same resource type etc.)
-            winnerHold.amount = loserHold.amount;
-            winnerHold.tokenType = loserHold.tokenType;
-            loserHold.amount = 0;
-            loserHold.tokenType = GameManager.TokenType.None;
-
-            winnerPlayer.holds[chosenHoldIndex] = winnerHold;
-            loserPlayer.holds[this.chosenHoldIndex] = loserHold;
-
-            GameManager.instance.UpdatePlayerHoldsServerRpc(winnerPlayer.player_index.Value, winnerHold.tokenType, winnerHold.amount, chosenHoldIndex);
-            GameManager.instance.UpdatePlayerHoldsServerRpc(loserPlayer.player_index.Value, loserHold.tokenType, loserHold.amount, this.chosenHoldIndex);
-
-            // reset state
-            ChooseHoldPanel.SetActive(false);
-            chooseHoldText.text = "Choose a Hold to Steal from";
-            this.chosenHoldIndex = -1;
-            winnerPlayer = null;
-            loserPlayer = null;
-            GameManager.instance.OnWinnerChoiceCompleteRpc();
-        }
-    }
-
-    public void OnButtonStealResources() {
-        if (winnerPlayer == null || loserPlayer == null) {
-            Debug.LogError("Winner or loser player not set");
-            return;
-        }
-        DisplayChooseHoldPanel(winnerPlayer.player_index.Value, loserPlayer.player_index.Value);
-    }
-
-    public void OnButtonStealTreasureCard() {
-        if (winnerPlayer == null || loserPlayer == null) {
-            Debug.LogError("Winner or loser player not set");
-            return;
-        }
-
-        VictoryChoicePanel.SetActive(false);
-
-
-        // TODO - DUJE: replace StealTreasureCardsRpc with just a check of which cards the loser has
-        GameManager.instance.players[loserPlayer.player_index.Value].StealTreasureCardsRpc(winnerPlayer.player_index.Value);
-
-        // NOTE - DUJE: below should be called at the end of the victory choice (rpc) chain
-        //GameManager.instance.OnWinnerChoiceCompleteRpc();
-    }
-
-    private void DisplayOwnHolds() {
-        List<PlayerGameScript.Hold> holds = winnerPlayer.holds;
-        DisplayHolds(holds);
-
-        bool allHoldsFull = holds.TrueForAll(hold => hold.amount > 0);
-        for (int i = 0; i < 5; i++) {
-            Button holdButton = holdPanels[i].GetComponentInChildren<Button>();
-            holdButton.interactable = allHoldsFull ? holds[i].tokenType != loserPlayer.holds[chosenHoldIndex].tokenType : holds[i].amount == 0;
-        }
-    }
-
-    public void DisplayStealTreasureCardPanel(bool[] treasureCards) {   
-        ChooseTreasureCardPanel.SetActive(true);
-        VictoryChoicePanel.SetActive(false);
-
-        string debugCards = "Again, the treasure cards are (which buttons should be active): ";
-        for (int i = 0; i < 4; i++) {
-            debugCards += treasureCards[i] + " ";
-        }
-
-        for (int i = 0; i < 4; i++) {
-            Button button = ChooseTreasureCardPanel.transform.GetChild(i+1).GetComponent<Button>();
-            button.interactable = treasureCards[i];
-        }
-    }
-
-    public void OnButtonChooseTreasureCard(int cardIndex) {
-        // 1 - Morgan's Map
-        // 2 - Saran's Saber
-        // 3 - Lady Beth
-        // 4 - 6th Hold
-        // TODO - DUJE: probably replace with enum
-
-        if (winnerPlayer == null || loserPlayer == null) {
-            Debug.LogError("Winner or loser player not set");
-            return;
-        }
-
-        GameManager.instance.StealTreasureCardServerRpc(winnerPlayer.player_index.Value, loserPlayer.player_index.Value, cardIndex);
-        ChooseTreasureCardPanel.SetActive(false);
-        winnerPlayer = null;
-        loserPlayer = null;
-        GameManager.instance.OnWinnerChoiceCompleteRpc();
-    }
-
-    public void OnButtonBackToVictoryChoice() {
-        chosenHoldIndex = -1;
-        ChooseTreasureCardPanel.SetActive(false);
-        ChooseHoldPanel.SetActive(false);
-        VictoryChoicePanel.SetActive(true);
-    }
-
 }
