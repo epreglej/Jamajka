@@ -9,9 +9,16 @@ public class PlayerMovement : NetworkBehaviour
 
     private bool hasReachedSquare = true;
 
+    private IEnumerator InitializePosition() {
+        if (SquareManager.instance == null) {
+            yield return null;
+        }
+        this.transform.position = SquareManager.instance.squares[0].transform.position;
+    }
+    
     void Start()
     {
-        this.transform.position = SquareManager.instance.squares[0].transform.position;
+        StartCoroutine(InitializePosition());
 
         // ovo zvati za kretanje
         // MoveXSquares(-1);

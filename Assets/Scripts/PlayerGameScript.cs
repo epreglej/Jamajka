@@ -12,7 +12,7 @@ public class PlayerGameScript : NetworkBehaviour
     public NetworkVariable<int> player_index = new NetworkVariable<int>(-1);
     public NetworkVariable<int> currentSquareID = new NetworkVariable<int>(0);
     public NetworkVariable<int> points = new NetworkVariable<int>(0);
-    public NetworkVariable<string> username = new NetworkVariable<string>("");
+    public NetworkVariable<FixedString64Bytes> username = new NetworkVariable<FixedString64Bytes>("");
 
     // card options
     GameManager.ActionCardOption cardOption1 = GameManager.ActionCardOption.None;
@@ -51,6 +51,16 @@ public class PlayerGameScript : NetworkBehaviour
         public int amount;
     }
 
+    private System.Collections.IEnumerator InitializeHoldUI()
+    {
+        while (GameManager.instance == null)
+        {
+            yield return null;
+        }
+
+        holdUI = GameManager.instance.HoldUI;
+    }
+
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
@@ -70,7 +80,7 @@ public class PlayerGameScript : NetworkBehaviour
     {
         if (IsOwner)
         {
-            
+        
             ulong playerNetworkObjectId = GetComponent<NetworkObject>().NetworkObjectId;
             GameManager.instance.AddPlayerServerRpc(playerNetworkObjectId);
 
@@ -80,7 +90,7 @@ public class PlayerGameScript : NetworkBehaviour
             SquareManager.instance.squares[0].AddPlayerIndexToSquareClientRpc(player_index.Value);
         }
 
-        holdUI = GameManager.instance.HoldUI;
+        StartCoroutine(InitializeHoldUI());
     }
     
     

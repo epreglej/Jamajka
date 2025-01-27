@@ -210,7 +210,7 @@ public class GameManager : NetworkBehaviour
         List<string> ordered_usernames = new List<string>();
         foreach(var player in players)
         {
-            results.Add(player.username.Value, player.points.Value);
+            results.Add(player.username.Value.ToString(), player.points.Value);
         }
 
         var sortedUsers = results.OrderByDescending(pair => pair.Value);

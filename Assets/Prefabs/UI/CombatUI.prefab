@@ -4190,7 +4190,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 3962533419
+  GlobalObjectIdHash: 172270838
   InScenePlacedSourceGlobalObjectIdHash: 2998041401
   DeferredDespawnTick: 0
   Ownership: 1
@@ -4237,6 +4237,7 @@ MonoBehaviour:
   chooseHoldText: {fileID: 7918733646226142824}
   VictoryChoicePanel: {fileID: 7671705410980822085}
   ChooseTreasureCardPanel: {fileID: 5148387345093216915}
+  _backButton: {fileID: 6012408997270386353}
   attacker: {fileID: 0}
   defender: {fileID: 0}
 --- !u!1 &2956517475179067613
