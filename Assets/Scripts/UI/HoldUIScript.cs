@@ -28,21 +28,26 @@ public class HoldUIScript : MonoBehaviour
         }
 
         int delta;
-        if (slotTextBefore == "") delta = amount;
-        else {
-            string amountBeforeString = slotTextBefore.Split(' ')[0];
+        string tokenName;
+        if (slotTextBefore == "") {
+            delta = amount;
+            tokenName = tokenType.ToString();
+        } else {
+            string[] parts = slotTextBefore.Split(' ');
+            string amountBeforeString = parts[0];
+            tokenName = parts[1];
             int amountBefore = int.Parse(amountBeforeString);
             delta = amount - amountBefore;
         }
-        ShowResourceDelta(slotIndex, delta, tokenType);
+        ShowResourceDelta(slotIndex, delta, tokenName);
     }
 
-    private void ShowResourceDelta(int slotIndex, int delta, GameManager.TokenType tokenType) {
+    private void ShowResourceDelta(int slotIndex, int delta, string tokenName) {
         if (delta == 0) return;
         Debug.Log("Resource delta: " + delta);
         GameObject slot = _slots[slotIndex];
         TextMeshProUGUI deltaText = slot.transform.GetChild(2).GetComponent<TextMeshProUGUI>();
-        string tokenName = " " + tokenType.ToString();
+        tokenName = " " + tokenName;
         deltaText.text = delta > 0 ? "+" + delta + tokenName : delta + tokenName;
         deltaText.color = delta > 0 ? Color.yellow : Color.red;
         deltaText.gameObject.SetActive(true);
