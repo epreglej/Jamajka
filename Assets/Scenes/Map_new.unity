@@ -20372,6 +20372,30 @@ PrefabInstance:
       propertyPath: m_Name
       value: HoldUIPrefab
       objectReference: {fileID: 0}
+    - target: {fileID: 3005443356989071829, guid: c3b05470af85ef9418d896577dfc3076, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3005443356989071829, guid: c3b05470af85ef9418d896577dfc3076, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3005443356989071829, guid: c3b05470af85ef9418d896577dfc3076, type: 3}
+      propertyPath: m_AnchorMin.x
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3005443356989071829, guid: c3b05470af85ef9418d896577dfc3076, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3005443356989071829, guid: c3b05470af85ef9418d896577dfc3076, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: -758
+      objectReference: {fileID: 0}
+    - target: {fileID: 3005443356989071829, guid: c3b05470af85ef9418d896577dfc3076, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 254
+      objectReference: {fileID: 0}
     - target: {fileID: 3582563955204931123, guid: c3b05470af85ef9418d896577dfc3076, type: 3}
       propertyPath: m_Pivot.x
       value: 0
@@ -20454,6 +20478,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5052584221813355238, guid: c3b05470af85ef9418d896577dfc3076, type: 3}
       propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6043454405254475693, guid: c3b05470af85ef9418d896577dfc3076, type: 3}
+      propertyPath: m_UiScaleMode
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8648641309666523144, guid: c3b05470af85ef9418d896577dfc3076, type: 3}
