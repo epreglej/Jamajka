@@ -3,6 +3,7 @@ using Unity.Netcode;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using Unity.Collections;
+using TMPro;
 
 
 public class PlayerGameScript : NetworkBehaviour
@@ -484,5 +485,19 @@ public class PlayerGameScript : NetworkBehaviour
         }
 
         return total;
+    }
+
+    [Rpc(SendTo.Owner)]
+    public void OpenShortageUIRpc(int moveBackSquares) {
+        GameObject shortagePanel = GameManager.instance.ShortageUI.transform.GetChild(0).gameObject;
+        TextMeshProUGUI text = shortagePanel.transform.GetChild(2).GetComponent<TextMeshProUGUI>();
+        text.text = "Moving back " + System.Math.Abs(moveBackSquares) + " squares";
+        shortagePanel.SetActive(true);
+        StartCoroutine(HideShortageUI(shortagePanel, 4f));
+    }
+
+    private System.Collections.IEnumerator HideShortageUI(GameObject shortagePanel, float seconds) {
+        yield return new WaitForSeconds(seconds);
+        shortagePanel.SetActive(false);
     }
 }

@@ -48,6 +48,7 @@ public class GameManager : NetworkBehaviour
     public Canvas ActionCardUI;
     public HoldUIScript HoldUI;
     public EndGameScreenUI EndScreenScript;
+    public Canvas ShortageUI;
 
     // Za rollanje Combat kocke - samo random index na listu
     public static List<int> COMBAT_DICE_VALUES = new List<int>{2, 4, 6, 8, STAR_COMBAT_VALUE};
@@ -822,6 +823,10 @@ public class GameManager : NetworkBehaviour
     {
         List<PlayerGameScript.Hold> playerHolds = players[player_on_turn.Value].holds;
         Square playerSquare = SquareManager.instance.GetPlayerSquare(player_on_turn.Value);
+        if (playerSquare == null) {
+            Debug.LogError("Player square is null (TryTaxPlayer)");
+            return;
+        }
         int taxAmount = playerSquare.resourceValue;
         TokenType taxType;
         switch (playerSquare.type)
@@ -888,7 +893,9 @@ public class GameManager : NetworkBehaviour
             if (dice_value == 2 || dice_value == 4) move_ammount = -1 * SquareManager.instance.FindPreviousSquareType(square, SquareType.Port);
             else if (dice_value == 6 || dice_value == 8) move_ammount = -1 * SquareManager.instance.FindPreviousSquareType(square, SquareType.Sea);
             else if (dice_value == 10) move_ammount = -1 * SquareManager.instance.FindPreviousSquareType(square, SquareType.PirateLair);
-
+            
+            players[player_on_turn.Value].OpenShortageUIRpc(move_ammount);
+            
             if (dice_value != STAR_COMBAT_VALUE)
             {
                 PlayerMovement movementComponent = players[player_on_turn.Value].GetComponent<PlayerMovement>();

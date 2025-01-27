@@ -44,7 +44,7 @@ public class HoldUIScript : MonoBehaviour
         TextMeshProUGUI deltaText = slot.transform.GetChild(2).GetComponent<TextMeshProUGUI>();
         string tokenName = " " + tokenType.ToString();
         deltaText.text = delta > 0 ? "+" + delta + tokenName : delta + tokenName;
-        deltaText.color = delta > 0 ? Color.green : Color.red;
+        deltaText.color = delta > 0 ? Color.yellow : Color.red;
         deltaText.gameObject.SetActive(true);
 
         StartCoroutine(HideDeltaAfterSeconds(deltaText.gameObject, 4f, slotIndex));
