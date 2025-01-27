@@ -6,22 +6,59 @@ using UnityEngine.UI;
 public class HoldUIScript : MonoBehaviour
 {
     [SerializeField] private List<GameObject> _slots;
+    [SerializeField] private TextMeshProUGUI _notificationText;
     [SerializeField] private Sprite _foodTokenSprite;
     [SerializeField] private Sprite _goldTokenSprite;
     [SerializeField] private Sprite _cannonTokenSprite;
     [SerializeField] private GameObject _slotContainer;
+    private int[] _shownDeltas = new int[5]{0, 0, 0, 0, 0};
 
     
     public void UpdateSlot(int slotIndex, GameManager.TokenType tokenType, int amount) {
         GameObject slot = _slots[slotIndex];
         Image slotImage = slot.transform.GetChild(0).GetComponent<Image>();
         slotImage.sprite = GetSprite(tokenType);
-        slot.transform.GetChild(1).GetComponent<TextMeshProUGUI>().text = amount > 0 ? amount.ToString() : "";
+        TextMeshProUGUI slotText = slot.transform.GetChild(1).GetComponent<TextMeshProUGUI>();
+        string slotTextBefore = slotText.text;
+        slotText.text = amount > 0 ? amount.ToString() : "";
         if (amount > 0) {
             slotImage.color = Color.white;
         } else {
             slotImage.color = Color.clear;
         }
+
+        int delta;
+        if (slotTextBefore == "") delta = amount;
+        else {
+            string amountBeforeString = slotTextBefore.Split(' ')[0];
+            int amountBefore = int.Parse(amountBeforeString);
+            delta = amount - amountBefore;
+        }
+        ShowResourceDelta(slotIndex, delta, tokenType);
+    }
+
+    private void ShowResourceDelta(int slotIndex, int delta, GameManager.TokenType tokenType) {
+        if (delta == 0) return;
+        Debug.Log("Resource delta: " + delta);
+        GameObject slot = _slots[slotIndex];
+        TextMeshProUGUI deltaText = slot.transform.GetChild(2).GetComponent<TextMeshProUGUI>();
+        string tokenName = " " + tokenType.ToString();
+        deltaText.text = delta > 0 ? "+" + delta + tokenName : delta + tokenName;
+        deltaText.color = delta > 0 ? Color.green : Color.red;
+        deltaText.gameObject.SetActive(true);
+
+        StartCoroutine(HideDeltaAfterSeconds(deltaText.gameObject, 4f, slotIndex));
+    }
+
+    private System.Collections.IEnumerator HideDeltaAfterSeconds(GameObject go, float seconds, int slotIndex) {
+        while (_shownDeltas[slotIndex] == 1) {
+            yield return null;
+        }
+        
+        _shownDeltas[slotIndex] = 1;
+        yield return new WaitForSeconds(seconds);
+        go.SetActive(false);
+        _shownDeltas[slotIndex] = 0;
     }
 
     public Sprite GetSprite(GameManager.TokenType tokenType) {
