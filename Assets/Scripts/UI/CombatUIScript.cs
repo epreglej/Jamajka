@@ -207,15 +207,31 @@ public class CombatUIScript : NetworkBehaviour
         {
             GameManager.instance.SetAttackerCannonTokensServerRpc(attackTokens);
             UpdateCannonTokensClientRpc(true, attackTokens);
+            RemoveCannonTokens(attacker, attackTokens);
         }
         else
         {
             GameManager.instance.SetDefenderCannonTokensServerRpc(attackTokens);
             UpdateCannonTokensClientRpc(false, attackTokens);
+            RemoveCannonTokens(defender, attackTokens);
         }
 
         attackTokens = 0;
         cannon_tokens_number_text.SetText(attackTokens.ToString());
+    }
+
+    private void RemoveCannonTokens(PlayerGameScript player, int amount) {
+        List<PlayerGameScript.Hold> holds = player.holds;
+        for (int i = 0; i < 5; i++) {
+            if (holds[i].tokenType == GameManager.TokenType.Cannon) {
+                int toRemove = Mathf.Min(holds[i].amount, amount);
+                int finalAmount = holds[i].amount - toRemove;
+                amount -= toRemove;
+                Debug.Log("Removing " + toRemove + " cannon tokens from hold " + i + " for player " + player.player_index.Value);
+                player.UpdatePlayerHoldsClientRpc(holds[i].tokenType, finalAmount, i);
+                if (amount == 0) break;
+            }
+        }
     }
 
     public void OnRollDicePressed()
