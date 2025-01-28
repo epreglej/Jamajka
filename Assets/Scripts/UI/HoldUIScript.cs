@@ -20,7 +20,7 @@ public class HoldUIScript : MonoBehaviour
         slotImage.sprite = GetSprite(tokenType);
         TextMeshProUGUI slotText = slot.transform.GetChild(1).GetComponent<TextMeshProUGUI>();
         string slotTextBefore = slotText.text;
-        slotText.text = amount > 0 ? amount.ToString() : "";
+        slotText.text = amount > 0 ? amount.ToString() + " " + tokenType.ToString() : "";
         if (amount > 0) {
             slotImage.color = Color.white;
         } else {
@@ -28,14 +28,14 @@ public class HoldUIScript : MonoBehaviour
         }
 
         int delta;
-        string tokenName;
+        string tokenName = tokenType != GameManager.TokenType.None ? tokenType.ToString() : "";
         if (slotTextBefore == "") {
             delta = amount;
             tokenName = tokenType.ToString();
         } else {
             string[] parts = slotTextBefore.Split(' ');
             string amountBeforeString = parts[0];
-            tokenName = parts[1];
+            tokenName = parts.Length > 1 ? parts[1] : tokenType.ToString();
             int amountBefore = int.Parse(amountBeforeString);
             delta = amount - amountBefore;
         }
