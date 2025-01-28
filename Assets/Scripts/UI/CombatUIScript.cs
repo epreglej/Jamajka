@@ -177,7 +177,12 @@ public class CombatUIScript : NetworkBehaviour
 
     public void AddAttackToken()
     {
-        // TODO : add max check for resources
+        if (attackerTurn) {
+            if (attackTokens >= attacker.GetResources(GameManager.TokenType.Cannon)) return;
+        } else {
+            if (attackTokens >= defender.GetResources(GameManager.TokenType.Cannon)) return;
+        }
+
         attackTokens += 1;
 
         cannon_tokens_number_text.SetText(attackTokens.ToString());
