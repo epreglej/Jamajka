@@ -825,6 +825,8 @@ public class GameManager : NetworkBehaviour
         Square playerSquare = SquareManager.instance.GetPlayerSquare(player_on_turn.Value);
         if (playerSquare == null) {
             Debug.LogError("Player square is null (TryTaxPlayer)");
+            if (dayAction) PlayerAction1EndedServerRPC();
+            else PlayerAction2EndedServerRPC();
             return;
         }
         int taxAmount = playerSquare.resourceValue;
