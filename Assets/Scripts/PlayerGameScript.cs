@@ -30,6 +30,10 @@ public class PlayerGameScript : NetworkBehaviour
     public ActionCard action_card_3 = null;
     public ActionCard action_card_4 = null; // only if morgans map
 
+    public GameObject model1;
+    public GameObject model2;
+    public GameObject model3;
+    public GameObject model4;
 
     // hold varables
     private GameManager.TokenType replaceHold_token;

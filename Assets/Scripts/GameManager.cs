@@ -164,9 +164,32 @@ public class GameManager : NetworkBehaviour
             SquareManager.instance.squares[0].AddPlayerIndexToSquareClientRpc(player.player_index.Value);
         }
 
-        // distribute initial resources
+        ShowRightPlayerModelsClientRpc();
         DistributeStartingResources();
         return true;
+    }
+
+
+    [ClientRpc]
+    public void ShowRightPlayerModelsClientRpc()
+    {
+        foreach (PlayerGameScript player in players)
+        {
+            if (player.player_index.Value == 0)
+            {
+                player.model1.SetActive(true);
+                player.model2.SetActive(false);
+                player.model3.SetActive(false);
+                player.model4.SetActive(false);
+            }
+            else if (player.player_index.Value == 1)
+            {
+                player.model1.SetActive(false);
+                player.model2.SetActive(true);
+                player.model3.SetActive(false);
+                player.model4.SetActive(false);
+            }
+        }
     }
 
     void EndGame()
