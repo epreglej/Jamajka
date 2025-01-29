@@ -425,6 +425,28 @@ public class PlayerGameScript : NetworkBehaviour
         }
     }
 
+    // removes resources from the player's holds, prioritizing the first holds
+    public void RemoveResources(GameManager.TokenType type, int amount) {
+        int amountRemoved = 0;
+        int amountBefore = amount;
+        for (int i = 0; i  < 5; i++) {
+            if (amount <= 0) break;
+            if (holds[i].tokenType == type) {
+                if (holds[i].amount >= amount) {
+                    UpdatePlayerHoldsClientRpc(type, holds[i].amount - amount, i);
+                    amountRemoved += amount;
+                    break;
+                } else {
+                    amount -= holds[i].amount;
+                    amountRemoved += holds[i].amount;
+                    UpdatePlayerHoldsClientRpc(GameManager.TokenType.None, 0, i);
+                }
+            }
+        }
+
+        Debug.Log("Removed " + amountRemoved + "/" + amountBefore + " " + type + " from player " + player_index.Value);
+    }
+
     // NOTE - DUJE: ovo ne treba biti rpc ako se syncaju treasure cardovi, neznam zasto sam ovo radia
     // , al je nacin eventualno za dobit skrivene treasure cardove koji ne bi bili syncani
     [Rpc(SendTo.Owner)]

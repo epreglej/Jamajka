@@ -838,8 +838,8 @@ public class GameManager : NetworkBehaviour
                 break;
         }
 
-        if (tokenType == TokenType.None) Debug.LogError("Trying to load a token that is not food, gold or cannon");
-        Debug.Log("Loading " + amount + " " + tokenType + " to player " + player_on_turn.Value + " day: " + dayAction);
+        if (tokenType == TokenType.None) Debug.LogWarning("Trying to load a token that is not food, gold or cannon");
+        //Debug.Log("Loading " + amount + " " + tokenType + " to player " + player_on_turn.Value + " day: " + dayAction);
 
         players[player_on_turn.Value].OpenHoldLoadingClientRpc(tokenType, amount, dayAction);
 
@@ -874,41 +874,19 @@ public class GameManager : NetworkBehaviour
 
         //TODO - DUJE player has the needed resources
         if (taxType != TokenType.None && 
-            playerHolds.Any<PlayerGameScript.Hold>(hold => hold.tokenType == taxType && hold.amount >= taxAmount)) 
+            players[player_on_turn.Value].GetResources(taxType) >= taxAmount)
         {
-            //TODO - DUJE remove the player resources
-            // eventually add UI for picking which hold to pay from
-            int minAmount = 9999; // prioritize the hold with the least amount
-            int minIndex = -1;
-            for (int i = 0; i < 5; i++)
-            {
-                if (playerHolds[i].tokenType == taxType && playerHolds[i].amount >= taxAmount && playerHolds[i].amount < minAmount)
-                {
-                    minAmount = playerHolds[i].amount;
-                    minIndex = i;
-                }
-            }
-
-            Debug.Log("Taxing player " + player_on_turn.Value + " for " + taxAmount + " " + taxType + " from hold " + minIndex);
-            UpdatePlayerHoldsServerRpc(player_on_turn.Value, taxType, playerHolds[minIndex].amount - taxAmount, minIndex);
+            Debug.Log("Taxing player " + player_on_turn.Value + " for " + taxAmount + " " + taxType 
+                        + " (player has " + players[player_on_turn.Value].GetResources(taxType) + ")");
+            players[player_on_turn.Value].RemoveResources(taxType, taxAmount);
         }
         else if (taxType != TokenType.None)
         {
-            // TODO - DUJE remove the amount of the resources that the player has
-            int maxAmount = 0; // prioritize the hold with the most amount
-            int maxIndex = -1;
-            for (int i = 0; i < 5; i++)
-            {
-                if (playerHolds[i].tokenType == taxType && playerHolds[i].amount > maxAmount)
-                {
-                    maxAmount = playerHolds[i].amount;
-                    maxIndex = i;
-                }
-            }
-
-            Debug.Log("Taxing player " + player_on_turn.Value + " for " + taxAmount + " " + taxType + " from hold " + maxIndex + " (shortage)");
+            // player doesn't have the needed resources
+            Debug.Log("Taxing player " + player_on_turn.Value + " for " + taxAmount + " " + taxType  
+                    + " (shortage, player has " + players[player_on_turn.Value].GetResources(taxType) + ")");
+            players[player_on_turn.Value].RemoveResources(taxType, taxAmount);
             
-            if (maxIndex != -1) UpdatePlayerHoldsServerRpc(player_on_turn.Value, taxType, playerHolds[maxIndex].amount - taxAmount, maxIndex);
 
             int dice_value = COMBAT_DICE_VALUES[Random.Range(0, 5)];
 
