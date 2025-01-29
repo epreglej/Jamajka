@@ -4384,6 +4384,18 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 1301104615969427875, guid: 3eb366214488c9c4082939becc2f0846, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1955647072147891442, guid: 3eb366214488c9c4082939becc2f0846, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 200
+      objectReference: {fileID: 0}
+    - target: {fileID: 1955647072147891442, guid: 3eb366214488c9c4082939becc2f0846, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 200
+      objectReference: {fileID: 0}
     - target: {fileID: 2724046035978265201, guid: 3eb366214488c9c4082939becc2f0846, type: 3}
       propertyPath: m_Name
       value: CombatUI
@@ -4391,6 +4403,30 @@ PrefabInstance:
     - target: {fileID: 4018674777218343737, guid: 3eb366214488c9c4082939becc2f0846, type: 3}
       propertyPath: GlobalObjectIdHash
       value: 172270838
+      objectReference: {fileID: 0}
+    - target: {fileID: 5328284673963350490, guid: 3eb366214488c9c4082939becc2f0846, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 200
+      objectReference: {fileID: 0}
+    - target: {fileID: 5328284673963350490, guid: 3eb366214488c9c4082939becc2f0846, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 200
+      objectReference: {fileID: 0}
+    - target: {fileID: 6031806220278104279, guid: 3eb366214488c9c4082939becc2f0846, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 200
+      objectReference: {fileID: 0}
+    - target: {fileID: 6031806220278104279, guid: 3eb366214488c9c4082939becc2f0846, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 200
+      objectReference: {fileID: 0}
+    - target: {fileID: 6243550460782854315, guid: 3eb366214488c9c4082939becc2f0846, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 200
+      objectReference: {fileID: 0}
+    - target: {fileID: 6243550460782854315, guid: 3eb366214488c9c4082939becc2f0846, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 200
       objectReference: {fileID: 0}
     - target: {fileID: 8362337394496564956, guid: 3eb366214488c9c4082939becc2f0846, type: 3}
       propertyPath: m_Pivot.x
@@ -4471,6 +4507,14 @@ PrefabInstance:
     - target: {fileID: 8362337394496564956, guid: 3eb366214488c9c4082939becc2f0846, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8991530767955212890, guid: 3eb366214488c9c4082939becc2f0846, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 200
+      objectReference: {fileID: 0}
+    - target: {fileID: 8991530767955212890, guid: 3eb366214488c9c4082939becc2f0846, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 200
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
