@@ -49,5 +49,4 @@ public class CameraController : NetworkBehaviour
     {
         this.player = null;
     }
-
 }
