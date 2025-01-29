@@ -16,7 +16,7 @@ public class Square : NetworkBehaviour
     // ili na onnetworkspawn staviti
     private void Start()
     {
-        Transform canvasTransform = transform.Find("Canvas"); // Find child named "Canvas"
+        Transform canvasTransform = transform.Find("Tag"); // Find child named "Canvas"
 
         if (canvasTransform != null)
         {
@@ -58,6 +58,12 @@ public class Square : NetworkBehaviour
     [ClientRpc]
     public void AddPlayerIndexToSquareClientRpc(int index)
     {
+        foreach (int i in playerIndicesOnSquare)
+        {
+            if(i == index) {
+                return;
+            }
+        }
         playerIndicesOnSquare.Add(index);
     }
 

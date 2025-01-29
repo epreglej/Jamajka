@@ -8,8 +8,8 @@ using TMPro;
 
 public class PlayerGameScript : NetworkBehaviour
 {
-    // public NetworkVariable<FixedString32Bytes> username = new NetworkVariable<FixedString32Bytes>();
-    // public string username = string.Empty;
+    public GameObject indicator;
+
     public NetworkVariable<int> player_index = new NetworkVariable<int>(-1);
     public NetworkVariable<int> currentSquareID = new NetworkVariable<int>(0);
     public NetworkVariable<int> points = new NetworkVariable<int>(0);
@@ -66,6 +66,8 @@ public class PlayerGameScript : NetworkBehaviour
     {
         base.OnNetworkSpawn();
 
+        currentSquareID = new NetworkVariable<int>(0);
+
         for (int i = 0; i < 5; i++)
         {
             Hold h = new();
@@ -81,6 +83,7 @@ public class PlayerGameScript : NetworkBehaviour
     {
         if (IsOwner)
         {
+            indicator.SetActive(true);
         
             ulong playerNetworkObjectId = GetComponent<NetworkObject>().NetworkObjectId;
             GameManager.instance.AddPlayerServerRpc(playerNetworkObjectId);

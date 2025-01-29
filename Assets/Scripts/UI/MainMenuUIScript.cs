@@ -9,7 +9,7 @@ using Unity.Netcode.Transports.UTP;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class MainMenuUIScript : MonoBehaviour
+public class MainMenuUIScript : NetworkBehaviour
 {
     public GameObject backgroundGameObject;
     public GameObject playButtonGameObject;
@@ -78,7 +78,7 @@ public class MainMenuUIScript : MonoBehaviour
             StartHost();
         }
 
-        backgroundGameObject.SetActive(false);
+        
         playButtonGameObject.SetActive(false);
         playerListGameObject.SetActive(true);
     }
@@ -87,10 +87,23 @@ public class MainMenuUIScript : MonoBehaviour
     {
         if (GameManager.instance.StartGame())
         {
-            playerListGameObject.SetActive(false);
             startGameButton.SetActive(false);
+            HidePlayerListClientRpc();
+            HideBackgroundClientRpc();
         }
 
+    }
+
+    [ClientRpc]
+    public void HidePlayerListClientRpc()
+    {
+        playerListGameObject.SetActive(false);
+    }
+
+    [ClientRpc]
+    public void HideBackgroundClientRpc()
+    {
+        backgroundGameObject.SetActive(false);
     }
 
     private void StartHost()

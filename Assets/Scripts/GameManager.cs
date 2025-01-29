@@ -159,6 +159,11 @@ public class GameManager : NetworkBehaviour
             }
         }
 
+        foreach (PlayerGameScript player in players)
+        {
+            SquareManager.instance.squares[0].AddPlayerIndexToSquareClientRpc(player.player_index.Value);
+        }
+
         // distribute initial resources
         DistributeStartingResources();
         return true;

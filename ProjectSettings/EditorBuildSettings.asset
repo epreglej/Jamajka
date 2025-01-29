@@ -29,6 +29,9 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Map_Duje_New.unity
     guid: 9b8757ef546b1054e8e316b33cc3762c
+  - enabled: 1
+    path: Assets/Scenes/Map_new.unity
+    guid: 37c380a27926fd44284b59ab02abf487
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   m_UseUCBPForAssetBundles: 0

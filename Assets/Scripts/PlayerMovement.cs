@@ -1,76 +1,95 @@
-using System.Collections;
-using TMPro;
+using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 
 public class PlayerMovement : NetworkBehaviour
 {
     public bool isMoving = false;
+    private Queue<int> movementQueue = new Queue<int>();
+    private List<int> squaresToMove = new List<int>();
+    private Vector3 targetPosition;
+    private Quaternion targetRotation;
+    private float movementSpeed = 15f;
+    private float rotationSpeed = 10f;
 
-    private bool hasReachedSquare = true;
-
-    private IEnumerator InitializePosition() {
-        if (SquareManager.instance == null) {
-            yield return null;
-        }
-        this.transform.position = SquareManager.instance.squares[0].transform.position;
-    }
-    
-    void Start()
+    private enum MovementState
     {
-        StartCoroutine(InitializePosition());
+        Idle,
+        Moving
+    }
+    private MovementState currentState = MovementState.Idle;
 
-        // ovo zvati za kretanje
-        // MoveXSquares(-1);
+    private void Start()
+    {
+        if (SquareManager.instance != null)
+        {
+            this.transform.position = SquareManager.instance.squares[0].transform.position;
+        }
     }
 
     public void MoveXSquares(int x)
     {
-        isMoving = true;
-        Debug.Log("Move for x sq " + x);
-        StartCoroutine(MoveXSquaresCoroutine(x));
+        if (currentState != MovementState.Idle)
+        {
+            movementQueue.Enqueue(x);
+            return;
+        }
+
+        StartMovement(x);
     }
 
-    private IEnumerator MoveXSquaresCoroutine(int x)
+    private void StartMovement(int x)
     {
-        int startingField = this.GetComponent<PlayerGameScript>().currentSquareID.Value;
-        hasReachedSquare = true;
+        isMoving = true;
+        currentState = MovementState.Moving;
+        Debug.Log("Move for x squares: " + x);
 
+        int startingField = this.GetComponent<PlayerGameScript>().currentSquareID.Value;
+
+        // Generate the list of squares to move through
+        squaresToMove.Clear();
         if (x > 0)
         {
+            // Moving forward
             for (int i = 1; i <= x; i++)
             {
-                if (!hasReachedSquare) yield return new WaitForSeconds(1f);
-                hasReachedSquare = false;
-                MoveToSquare((startingField + i) % 31);
-                //yield return new WaitForSeconds(1.5f);
+                int nextSquareID = (startingField + i) % 31;
+                squaresToMove.Add(nextSquareID);
             }
         }
-        else if (x < 0) 
+        else if (x < 0)
         {
-            Debug.Log("moving backwards.");
-            if (startingField < Mathf.Abs(x)) x = -1 * startingField;
+            // Moving backward
+            Debug.Log("Moving backwards.");
             for (int i = -1; i >= x; i--)
             {
-                if (!hasReachedSquare) yield return new WaitForSeconds(1f);
-                hasReachedSquare = false;
-                MoveToSquare(((startingField + i) % 31 + 31) % 31);
-                // yield return new WaitForSeconds(1.5f);
+                // Ensure the result is non-negative and within the valid range
+                int nextSquareID = (startingField + i + 31) % 31;
+                squaresToMove.Add(nextSquareID);
             }
         }
-        yield return new WaitForSeconds(1f);
-        isMoving = false;
-        Debug.Log("Movement over");
+
+        // Start moving to the first square in the list
+        if (squaresToMove.Count > 0)
+        {
+            MoveToSquare(squaresToMove[0]);
+        }
+        else
+        {
+            // No squares to move to (e.g., x = 0)
+            currentState = MovementState.Idle;
+            isMoving = false;
+            Debug.Log("No movement required.");
+        }
+
+        // Track the player with the camera
+        CameraController.instance.TrackPlayerClientRpc(this, default);
     }
 
-
-
-    public void MoveToSquare(int squareID)
+    private void MoveToSquare(int squareID)
     {
         if (squareID == 0 && this.GetComponent<PlayerGameScript>().currentSquareID.Value == 30)
         {
-            // TODO: dominik?
-            // ovo nije dobar kod ako se mogu vracati unazad pa onda opet 1 korak naprijed???
             Debug.Log("Lap completed.");
         }
 
@@ -87,46 +106,87 @@ public class PlayerMovement : NetworkBehaviour
             if (square.id == squareID)
             {
                 Vector3 destination = square.transform.position;
+
                 if (square.GetPlayerIndexesOnSquare().Count == 1)
                 {
-                    destination = destination + new Vector3(-2, 0, 2);
+                    destination += new Vector3(-2, 0, 2);
                 }
                 else if (square.GetPlayerIndexesOnSquare().Count == 2)
                 {
-                    destination = destination + new Vector3(2, 0, -2);
+                    destination += new Vector3(2, 0, -2);
                 }
                 else if (square.GetPlayerIndexesOnSquare().Count == 3)
                 {
-                    destination = destination + new Vector3(-3, 0, 1);
+                    destination += new Vector3(-3, 0, 1);
                 }
 
                 square.AddPlayerIndexToSquareClientRpc(this.GetComponent<PlayerGameScript>().player_index.Value);
-                this.GetComponent<PlayerGameScript>().currentSquareID = new NetworkVariable<int>(squareID);
-                MoveTowardsTargetPositionClientRpc(destination);
+                this.GetComponent<PlayerGameScript>().currentSquareID.Value = squareID;
+
+                SetTargetPositionClientRpc(destination);
             }
         }
     }
 
     [ClientRpc]
-    private void MoveTowardsTargetPositionClientRpc(Vector3 targetPosition)
+    private void SetTargetPositionClientRpc(Vector3 destination)
     {
-        StartCoroutine(MoveCoroutine(targetPosition));
+        targetPosition = destination;
+        targetRotation = Quaternion.LookRotation((destination - transform.position).normalized);
+        currentState = MovementState.Moving;
     }
 
-    private IEnumerator MoveCoroutine(Vector3 targetPosition)
+    private void Update()
     {
-        while (Vector3.Distance(transform.position, targetPosition) > 0.01f)
+        if (currentState == MovementState.Moving)
         {
-            Vector3 direction = (targetPosition - transform.position).normalized;
-            Quaternion targetRotation = Quaternion.LookRotation(direction);
-            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, 0.01f);
-            transform.position = Vector3.MoveTowards(transform.position, targetPosition, 0.05f);
-
-            yield return null;
+            MoveTowardsTargetPosition();
         }
-
-        hasReachedSquare = true;
     }
 
+    private void MoveTowardsTargetPosition()
+    {
+        transform.position = Vector3.MoveTowards(transform.position, targetPosition, movementSpeed * Time.deltaTime);
+        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
 
+        if (Vector3.Distance(transform.position, targetPosition) < 0.05f)
+        {
+            if (squaresToMove.Count == 0)
+            {
+                currentState = MovementState.Idle;
+                isMoving = false;
+                Debug.Log("Movement over");
+
+                CameraController.instance.ResetCameraClientRpc();
+
+                if (movementQueue.Count > 0)
+                {
+                    int nextX = movementQueue.Dequeue();
+                    StartMovement(nextX);
+                }
+                return;
+            }
+
+            squaresToMove.RemoveAt(0);
+
+            if (squaresToMove.Count > 0)
+            {
+                MoveToSquare(squaresToMove[0]);
+            }
+            else
+            {
+                currentState = MovementState.Idle;
+                isMoving = false;
+                Debug.Log("Movement over");
+
+                CameraController.instance.ResetCameraClientRpc();
+
+                if (movementQueue.Count > 0)
+                {
+                    int nextX = movementQueue.Dequeue();
+                    StartMovement(nextX);
+                }
+            }
+        }
+    }
 }
