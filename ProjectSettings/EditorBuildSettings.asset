@@ -14,23 +14,23 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/Scenes/Game.unity
     guid: 206448fbeecc0d94bbac87bebb443dfe
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/DiceTest.unity
     guid: 9afd689cba305ce4f9150e81fb253fbc
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/ActionCardTest.unity
     guid: af4dd4f1a6c3f944ba9e0b2d27f94062
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/CombatTest_new.unity
     guid: a8e9b7e78e1143a41af6c45f46eb6992
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/Map.unity
     guid: e3eb21ff7936c1c42ac250d6c4a35c6d
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/Map_Duje_New.unity
     guid: 9b8757ef546b1054e8e316b33cc3762c
   - enabled: 1
-    path: Assets/Scenes/Map_new.unity
+    path: Assets/Scenes/Game.unity
     guid: 37c380a27926fd44284b59ab02abf487
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
