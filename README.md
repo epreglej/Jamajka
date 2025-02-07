@@ -2,7 +2,7 @@
 
 ## O igri
 
-**Jamajka** je društvena igra za 2 do 6 igrača u kojoj svaki igrač igra ulogu pirata koji sudjeluje u utrci oko otoka.
+**Jamajka** je društvena igra za 2 do 6 igrača u kojoj svaki igrač igra ulogu pirata koji sudjeluje u utrci oko otoka.<br />
 Ova igra je implementacija postojeće društvene igre istog imena (no za 2 do 4 igrača!).
 
 <p align="left">
@@ -14,14 +14,15 @@ Ova igra je implementacija postojeće društvene igre istog imena (no za 2 do 4 
 
 - U igri postoje resursi koji se troše: zlatnici, hrana i topovi. Resursi se pohranjuju u ograničeni broj spremnika.
 - U svakom potezu igrači bacaju 2 kockice.
-- Svaki igrač odigrava jednu akcijsku karticu po potezu. Moguće akcije uključuju:
+- Svaki igrač odigrava jednu akcijsku karticu po potezu.
+- Moguće akcije uključuju:
   - Kretanje unaprijed
   - Kretanje unatrag
   - Punjenje resursima
 
-### Kartice s blagom
+### Borba
 
-Kartice s blagom daju igraču posebne mogućnosti. Kada se dva ili više igrača nađu na istom polju, dolazi do borbe. Zbroj bačene kockice i uloženih topova određuje pobjednika. Pobjednik može ukrasti resurse ili kartice s blagom od gubitnika.
+Kada se dva ili više igrača nađu na istom polju, dolazi do borbe. Zbroj bačene kockice i uloženih topova određuje pobjednika. Pobjednik može ukrasti resurse ili kartice s blagom od gubitnika.
 
 ### Kraj igre
 
