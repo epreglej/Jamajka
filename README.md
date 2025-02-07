@@ -2,7 +2,8 @@
 
 ## O igri
 
-**Jamajka** je društvena igra za 2 do 6 igrača u kojoj svaki igrač igra ulogu pirata koji sudjeluje u utrci oko otoka Jamajke. Ova igra je implementacija postojeće društvene igre istog imena.
+**Jamajka** je društvena igra za 2 do 6 igrača u kojoj svaki igrač igra ulogu pirata koji sudjeluje u utrci oko otoka Jamajke.
+Ova igra je implementacija postojeće društvene igre istog imena (no za 2 do 4 igrača!).
 
 <p align="left">
   &nbsp;
