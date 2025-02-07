@@ -25,4 +25,3 @@ Kartice s blagom daju igraču posebne mogućnosti. Kada se dva ili više igrača
 ### Kraj igre
 
 Igra završava kada jedan od igrača napravi cijeli krug oko Jamajke. Konačni pobjednik određuje se kombinacijom završne pozicije, broja resursa i kartica s blagom.
----
